@@ -1,2 +1,5 @@
 output
 pdf_processor.log
+.venv
+__pycache__
+*__pycache__*
