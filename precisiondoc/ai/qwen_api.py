@@ -1,11 +1,14 @@
 import os
-import logging
-from typing import Dict, Optional
+import requests
+import json
+from typing import Dict, Any, Optional
 import base64
 from openai import OpenAI
 
-# Configure logging
-logger = logging.getLogger(__name__)
+from ..utils.log_utils import setup_logger
+
+# Setup logger for this module
+logger = setup_logger(__name__)
 
 class QwenClient:
     """Client for interacting with Qwen API using OpenAI compatible mode"""
@@ -31,7 +34,7 @@ class QwenClient:
         )
         
         # Default models
-        self.text_ = "qwen-max"  # or qwen-max, qwen-plus, qwen-turbo
+        self.text_model = "qwen-max"  # or qwen-max, qwen-plus, qwen-turbo
         self.multimodal_model = "qwen-vl-max"  # or qwen-vl-plus
     
     def chat(self, prompt: str, system_prompt: Optional[str] = None) -> str:

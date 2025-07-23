@@ -1,25 +1,20 @@
 import os
 import json
-import logging
-import argparse
+import re
 import pandas as pd
 from typing import Dict, List
 from dotenv import load_dotenv
 from datetime import datetime
-import re
 
 # Import utility modules
 from ..pdf.pdf_utils import find_latest_pdfs, split_pdf, extract_text_from_pdf, convert_pdf_to_image
 from ..ai.ai_client import AIClient
 from ..utils.word_utils import WordUtils
 from ..utils.data_utils import DataUtils
+from ..utils.log_utils import setup_logger
 
-# Configure logging
-logging.basicConfig(
-    level=os.getenv("LOG_LEVEL", "INFO"),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# Setup logger for this module
+logger = setup_logger(__name__)
 
 class PDFProcessor:
     """Main class for processing PDF documents"""

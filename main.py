@@ -7,15 +7,16 @@ Main program entry file
 
 import os
 import argparse
-import logging
 from dotenv import load_dotenv
 
-# Configure logging
-logging.basicConfig(
-    level=os.getenv("LOG_LEVEL", "INFO"),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# Import logging utility
+from precisiondoc.utils.log_utils import setup_logger
+
+# Import PDF processor
+from precisiondoc.pdf.pdf_processor import PDFProcessor
+
+# Setup logger for this module
+logger = setup_logger(__name__)
 
 def main():
     """Main program entry point"""
@@ -29,9 +30,6 @@ def main():
     
     # Load environment variables from .env file
     load_dotenv()
-    
-    # Import processor (using new import path)
-    from precisiondoc.pdf.pdf_processor import PDFProcessor
     
     processor = PDFProcessor(
         folder_path=args.folder,

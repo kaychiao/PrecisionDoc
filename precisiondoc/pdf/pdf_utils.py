@@ -1,13 +1,15 @@
 import os
 import re
-import glob
-import logging
-from typing import Dict, List
-from collections import defaultdict
 import fitz  # PyMuPDF
+import glob
+from pathlib import Path
+from typing import List, Dict
+from collections import defaultdict
 
-# Configure logging
-logger = logging.getLogger(__name__)
+from ..utils.log_utils import setup_logger
+
+# Setup logger for this module
+logger = setup_logger(__name__)
 
 def normalize_filename(filename: str) -> str:
     """

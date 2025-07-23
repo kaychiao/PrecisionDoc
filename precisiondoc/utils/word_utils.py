@@ -1,12 +1,16 @@
 import os
-import logging
+import pandas as pd
 from docx import Document
-from docx.shared import Inches, Pt, Cm
+from docx.shared import Pt, Inches, RGBColor
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.style import WD_STYLE_TYPE
 from docx.enum.text import WD_LINE_SPACING
 from docx.enum.section import WD_ORIENT, WD_SECTION
 
-# Configure logging
-logger = logging.getLogger(__name__)
+from .log_utils import setup_logger
+
+# Setup logger for this module
+logger = setup_logger(__name__)
 
 class WordUtils:
     """Word document processing utility class"""
@@ -22,12 +26,12 @@ class WordUtils:
         # Set page margins and width
         sections = doc.sections
         for section in sections:
-            section.page_width = Cm(21)  # A4 width
-            section.page_height = Cm(29.7)  # A4 height
-            section.left_margin = Cm(2.5)
-            section.right_margin = Cm(2.5)
-            section.top_margin = Cm(2.5)
-            section.bottom_margin = Cm(2.5)
+            section.page_width = Inches(8.27)  # A4 width
+            section.page_height = Inches(11.69)  # A4 height
+            section.left_margin = Inches(1)
+            section.right_margin = Inches(1)
+            section.top_margin = Inches(1)
+            section.bottom_margin = Inches(1)
         
         # Add heading
         heading = doc.add_heading('Precision Evidence Report', 0)
@@ -93,9 +97,6 @@ class WordUtils:
             output_folder: Output folder path, used to find images
         """
         try:
-            # Import necessary libraries
-            import pandas as pd
-            
             logger.info(f"Exporting evidence from {excel_file} to {word_file}")
             
             # Read Excel file

@@ -1,14 +1,14 @@
 import os
-import logging
 import openai
 import base64
 from typing import Dict, Optional
 
 # Import Qwen client
 from .qwen_api import QwenClient
+from ..utils.log_utils import setup_logger
 
-# Configure logging
-logger = logging.getLogger(__name__)
+# Setup logger for this module
+logger = setup_logger(__name__)
 
 class AIClient:
     """Client for interacting with AI APIs (OpenAI or Qwen)"""

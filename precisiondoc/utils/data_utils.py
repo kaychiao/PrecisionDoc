@@ -1,12 +1,13 @@
 import os
 import json
-import logging
 import pandas as pd
-from typing import Dict, List
+from typing import Dict, List, Any
 from datetime import datetime
 
-# Configure logging
-logger = logging.getLogger(__name__)
+from .log_utils import setup_logger
+
+# Setup logger for this module
+logger = setup_logger(__name__)
 
 class DataUtils:
     """Data processing utility class"""
