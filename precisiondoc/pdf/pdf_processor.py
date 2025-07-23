@@ -6,6 +6,7 @@ import pandas as pd
 from typing import Dict, List
 from dotenv import load_dotenv
 from datetime import datetime
+import re
 
 # Import utility modules
 from ..pdf.pdf_utils import find_latest_pdfs, split_pdf, extract_text_from_pdf, convert_pdf_to_image
@@ -179,27 +180,49 @@ class PDFProcessor:
         
         Args:
             results: Dictionary mapping document type to list of page results
-            output_file: Path to the output file (default: all_results_{timestamp}.json in output_folder)
+            output_file: Path to the output file (default: {pdf_name}_results.json in output_folder)
         
         Returns:
             Path to the output file
         """
-        # # Use DataUtils to handle JSON file
-        # json_file = DataUtils.handle_json_file(results, output_file, self.output_folder)
+        # Process each PDF separately
+        json_files = []
         
-        # # Create Excel file path
-        # excel_file = json_file.replace('.json', '.xlsx')
+        for pdf_name, page_results in results.items():
+            # Normalize PDF name for file naming
+            normalized_pdf_name = re.sub(r'[^\w\-\.]', '_', pdf_name)
+            
+            # Create output file path based on PDF name
+            if output_file:
+                # If output_file is provided, use its directory but with normalized PDF name
+                output_dir = os.path.dirname(output_file)
+                base_filename = f"{normalized_pdf_name}_results.json"
+                pdf_output_file = os.path.join(output_dir, base_filename)
+            else:
+                # Otherwise use output_folder with normalized PDF name
+                pdf_output_file = os.path.join(self.output_folder, f"{normalized_pdf_name}_results.json")
+            
+            # Save JSON results for this PDF
+            pdf_results = {pdf_name: page_results}
+            json_file = DataUtils.handle_json_file(pdf_results, pdf_output_file, self.output_folder)
+            json_files.append(json_file)
+            
+            # Create Excel file path
+            excel_file = json_file.replace('.json', '.xlsx')
+            
+            # Convert nested results to flat structure
+            all_rows = DataUtils.convert_to_flat_structure(pdf_results)
+            
+            # Save to Excel
+            DataUtils.save_to_excel(all_rows, excel_file)
+            
+            # Export evidence to Word
+            word_file = excel_file.replace('.xlsx', '_evidence.docx')
+            WordUtils.export_evidence_to_word(excel_file, word_file, self.output_folder)
+            
+            logger.info(f"Saved results for {pdf_name} to {json_file}, {excel_file}, and {word_file}")
         
-        # # Convert nested results to flat structure
-        # all_rows = DataUtils.convert_to_flat_structure(results)
-        
-        # # Save to Excel
-        # DataUtils.save_to_excel(all_rows, excel_file)
-        
-        # Export evidence to Word
-        excel_file = "/Users/jiaoyk/Downloads/test_output/all_results_20250722_160951.xlsx" # test code
-        word_file = excel_file.replace('.xlsx', '_evidence.docx')
-        WordUtils.export_evidence_to_word(excel_file, word_file, self.output_folder)
-        
-        return json_file
-
+        # Return the list of JSON files or the first one if there's only one
+        if len(json_files) == 1:
+            return json_files[0]
+        return json_files
