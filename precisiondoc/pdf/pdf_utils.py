@@ -51,11 +51,47 @@ def find_latest_pdfs(folder_path: str) -> Dict[str, str]:
     for pdf_path in pdf_files:
         filename = os.path.basename(pdf_path)
         # Extract document type and year using regex
-        # Pattern matches: document type + year
-        # Example: "CSCO黑色素瘤诊疗指南2024_20241225015714.pdf" -> group="CSCO黑色素瘤诊疗指南", year=2024
+        # Pattern matches various document naming patterns:
+        # 1. CSCO pattern: "CSCO黑色素瘤诊疗指南2024_20241225015714.pdf"
+        # 2. English CSCO: "Chinese Society of Clinical Oncology (CSCO) diagnosis and treatment guidelines for colorectal cancer 2018 (English version)_20193211500.pdf"
+        # 3. Year-prefixed: "2020论文集_2020论文集.pdf", "2024论文集_20241114111047.pdf"
+        # 4. Version-suffixed: "lung_screening_Version_1.2025.pdf", "lung_screening-patient_Version_2023.pdf"
+        
+        # Try different patterns in sequence
+        doc_type = None
+        year = None
+        
+        # Pattern 1: CSCO pattern
         match = re.match(r'(CSCO[^0-9]+)(\d{4}).*\.pdf', filename)
         if match:
             doc_type, year = match.groups()
+        
+        # Pattern 2: English CSCO with year
+        if not match:
+            match = re.search(r'(Chinese Society of Clinical Oncology.*?)(\d{4}).*\.pdf', filename, re.IGNORECASE)
+            if match:
+                doc_type, year = match.groups()
+        
+        # Pattern 3: Year-prefixed documents (论文集)
+        if not match:
+            match = re.match(r'(\d{4})(论文集).*\.pdf', filename)
+            if match:
+                year, suffix = match.groups()
+                doc_type = suffix  # Use "论文集" as the document type
+        
+        # Pattern 4: Version-suffixed documents
+        if not match:
+            match = re.search(r'(.*?_?[Vv]ersion_?\d*\.?)(\d{4}).*\.pdf', filename)
+            if match:
+                doc_type, year = match.groups()
+        
+        # Pattern 5: Version-suffixed documents with hyphen
+        if not match:
+            match = re.search(r'(.*?-.*?_?[Vv]ersion_?)(\d{4}).*\.pdf', filename)
+            if match:
+                doc_type, year = match.groups()
+        
+        if doc_type and year:
             document_groups[doc_type].append((int(year), pdf_path))
     
     # Find the latest version of each document type
