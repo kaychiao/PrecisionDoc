@@ -22,8 +22,14 @@ pip install -r requirements.txt
 
 ```
 OPENAI_API_KEY=your_openai_api_key
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_MODEL=gpt-4
+
 QWEN_API_KEY=your_qwen_api_key
 QWEN_BASES_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+QWEN_TEXT_MODEL=qwen-max
+QWEN_MULTIMODAL_MODEL=qwen-vl-max
+
 LOG_LEVEL=INFO
 ```
 

@@ -36,9 +36,9 @@ class QwenClient:
             base_url=base_url
         )
         
-        # Default models
-        self.text_model = "qwen-max"  # or qwen-max, qwen-plus, qwen-turbo
-        self.multimodal_model = "qwen-vl-max"  # or qwen-vl-plus
+        # Get model names from environment variables or use defaults
+        self.text_model = os.getenv("QWEN_TEXT_MODEL", "qwen-max")  # or qwen-max, qwen-plus, qwen-turbo
+        self.multimodal_model = os.getenv("QWEN_MULTIMODAL_MODEL", "qwen-vl-max")  # or qwen-vl-plus
     
     def chat(self, prompt: str, system_prompt: Optional[str] = None) -> str:
         """

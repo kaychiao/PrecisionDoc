@@ -213,9 +213,16 @@ class AIClient:
         """
         openai.api_key = self.api_key
         
+        # Set OpenAI base URL from environment if available
+        if self.base_url:
+            openai.api_base = self.base_url
+        
         try:
+            # Get model name from environment or use default
+            model = os.getenv("OPENAI_MODEL", "gpt-4")
+            
             response = openai.ChatCompletion.create(
-                model="gpt-4",
+                model=model,
                 messages=[
                     {"role": "system", "content": "You are a medical document analysis assistant."},
                     {"role": "user", "content": prompt}
@@ -241,8 +248,7 @@ class AIClient:
         try:
             response = self.qwen_client.chat(
                 prompt=prompt,
-                system_prompt="You are a medical document analysis assistant.",
-                base_url=self.base_url
+                system_prompt="You are a medical document analysis assistant."
             )
             return {"success": True, "content": response}
         except Exception as e:
@@ -269,8 +275,7 @@ class AIClient:
             response = self.qwen_client.chat_with_image(
                 prompt=prompt,
                 image_data=image_data,
-                system_prompt="You are a medical document analysis assistant specialized in analyzing medical documents and images.",
-                base_url=self.base_url
+                system_prompt="You are a medical document analysis assistant specialized in analyzing medical documents and images."
             )
             return {"success": True, "content": response}
         except Exception as e:

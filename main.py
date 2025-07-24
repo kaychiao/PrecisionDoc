@@ -38,8 +38,8 @@ def main():
         output_folder=args.output_folder
     )
     
-    # results = processor.process_all()
-    results = {} # skip this step
+    results = processor.process_all()
+    # results = {} # skip this step
     processor.save_consolidated_results(results)
 
 if __name__ == "__main__":
