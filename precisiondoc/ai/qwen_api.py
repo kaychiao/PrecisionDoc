@@ -27,10 +27,13 @@ class QwenClient:
         else:
             self.api_key = api_key
         
+        # Get base URL from environment or use default
+        base_url = os.getenv("QWEN_BASES_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
+        
         # Initialize OpenAI client with DashScope compatible endpoint
         self.client = OpenAI(
             api_key=self.api_key,
-            base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
+            base_url=base_url
         )
         
         # Default models

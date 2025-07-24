@@ -23,6 +23,7 @@ pip install -r requirements.txt
 ```
 OPENAI_API_KEY=your_openai_api_key
 QWEN_API_KEY=your_qwen_api_key
+QWEN_BASES_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
 LOG_LEVEL=INFO
 ```
 

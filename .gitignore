@@ -4,3 +4,4 @@ pdf_processor.log
 __pycache__
 *__pycache__*
 .env
+/logs

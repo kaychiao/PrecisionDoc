@@ -36,8 +36,15 @@ class AIClient:
         else:
             self.api_key = api_key
             
+        # Get base URL from environment variables
+        if self.use_qwen:
+            self.base_url = os.getenv("QWEN_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
+        else:
+            self.base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+            
         # Initialize Qwen client if needed
         if self.use_qwen:
+            # No need to pass base_url as QwenClient already handles it from environment
             self.qwen_client = QwenClient(api_key=self.api_key)
     
     def identify_page_type(self, text: str, image_path: Optional[str] = None) -> Dict:
@@ -234,7 +241,8 @@ class AIClient:
         try:
             response = self.qwen_client.chat(
                 prompt=prompt,
-                system_prompt="You are a medical document analysis assistant."
+                system_prompt="You are a medical document analysis assistant.",
+                base_url=self.base_url
             )
             return {"success": True, "content": response}
         except Exception as e:
@@ -261,7 +269,8 @@ class AIClient:
             response = self.qwen_client.chat_with_image(
                 prompt=prompt,
                 image_data=image_data,
-                system_prompt="You are a medical document analysis assistant specialized in analyzing medical documents and images."
+                system_prompt="You are a medical document analysis assistant specialized in analyzing medical documents and images.",
+                base_url=self.base_url
             )
             return {"success": True, "content": response}
         except Exception as e:

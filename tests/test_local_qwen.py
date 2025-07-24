@@ -1,7 +1,12 @@
 from openai import OpenAI
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 client = OpenAI(
-    base_url="https://bio-qwen3-api.brbiotech.tech/v1",
+    base_url=os.getenv("QWEN_BASES_URL"),
     api_key="no-key-required"
 )
 
@@ -12,5 +17,3 @@ response = client.chat.completions.create(
     max_tokens=512
 )
 print(response.choices[0].message.content)
-
-
