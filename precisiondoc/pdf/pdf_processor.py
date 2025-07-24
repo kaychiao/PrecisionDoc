@@ -83,12 +83,10 @@ class PDFProcessor:
             }
         
         # Process content with AI
-        print("self.use_qwen >", self.use_qwen, "image_path >", image_path)
         if self.use_qwen and image_path:
             # Use image-based processing with Qwen
             logger.info(f"Processing page with Qwen image API: {os.path.basename(page_path)}")
             result = self.ai_client.process_image(image_path)
-            print("page result >", result)
         else:
             # Use text-based processing
             logger.info(f"Processing page with text API: {os.path.basename(page_path)}")
@@ -120,10 +118,8 @@ class PDFProcessor:
         
         results = {}
 
-        print("all latest_pdfs >>", latest_pdfs)
-
         # need to remove later
-        latest_pdfs = {k:v for k,v in latest_pdfs.items() if "非小细胞肺癌" in v}
+        # latest_pdfs = {k:v for k,v in latest_pdfs.items() if "非小细胞肺癌" in v}
         
         # Create a consolidated output file path that will be used throughout processing
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -131,7 +127,6 @@ class PDFProcessor:
         
         results = {}
 
-        print("all latest_pdfs >>", latest_pdfs)
 
         # Process each PDF
         for doc_type, pdf_path in latest_pdfs.items():
