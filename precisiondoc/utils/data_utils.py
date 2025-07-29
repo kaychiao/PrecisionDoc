@@ -70,7 +70,7 @@ class DataUtils:
                 if isinstance(page_data, dict):
                     for key, value in page_data.items():
                         if key != 'content':
-                            row[key] = value
+                            DataUtils.add_to_row_with_normalization(row, key, value)
                     
                     # If content field exists, process it
                     if 'content' in page_data:
@@ -83,6 +83,56 @@ class DataUtils:
                 all_rows.append(row)
         
         return all_rows
+    
+    @staticmethod
+    def normalize_column_name(name: str) -> str:
+        """
+        Normalize column names by removing colons and standardizing them
+        
+        Args:
+            name: Original column name
+            
+        Returns:
+            Normalized column name
+        """
+        # Remove colons and trim whitespace
+        normalized = name.replace('：', '').strip()
+        return normalized
+    
+    @staticmethod
+    def add_to_row_with_normalization(row: Dict, key: str, value: Any) -> None:
+        """
+        Add a key-value pair to the row with column name normalization and merging
+        
+        Args:
+            row: Data row to update
+            key: Original key name
+            value: Value to add
+        """
+        # Define mapping of equivalent column names
+        column_mapping = {
+            '解析说明': '解析',
+            '分析说明': '分析',
+            '结论': '结论'
+        }
+        
+        # Normalize the key
+        normalized_key = DataUtils.normalize_column_name(key)
+        
+        # Map to standard column name if it's in the mapping
+        if normalized_key in column_mapping:
+            normalized_key = column_mapping[normalized_key]
+            
+        # If the normalized key already exists in the row, merge the values
+        if normalized_key in row:
+            # If both values are strings, concatenate them
+            if isinstance(row[normalized_key], str) and isinstance(value, str):
+                row[normalized_key] = f"{row[normalized_key]}\n{value}"
+            # Otherwise, prefer the new value
+            else:
+                row[normalized_key] = value
+        else:
+            row[normalized_key] = value
     
     @staticmethod
     def process_json_content(content: str, row: Dict) -> None:
@@ -107,7 +157,7 @@ class DataUtils:
                         # Add JSON data to row
                         if isinstance(json_data, dict):
                             for key, value in json_data.items():
-                                row[key] = value
+                                DataUtils.add_to_row_with_normalization(row, key, value)
                     except json.JSONDecodeError:
                         logger.warning(f"Could not parse JSON part {part_idx} from content")
         except Exception as e:
@@ -146,7 +196,7 @@ class DataUtils:
                 if current_heading:
                     section_content = '\n'.join(current_content).strip()
                     if section_content:
-                        row[current_heading] = section_content
+                        DataUtils.add_to_row_with_normalization(row, current_heading, section_content)
                 
                 # Start new section
                 current_heading = line.strip().replace('###', '').strip()
@@ -159,7 +209,7 @@ class DataUtils:
         if current_heading and current_content:
             section_content = '\n'.join(current_content).strip()
             if section_content:
-                row[current_heading] = section_content
+                DataUtils.add_to_row_with_normalization(row, current_heading, section_content)
     
     @staticmethod
     def save_to_excel(all_rows: List[Dict], excel_file: str) -> None:
