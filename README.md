@@ -33,6 +33,20 @@ QWEN_MULTIMODAL_MODEL=qwen-vl-max
 LOG_LEVEL=INFO
 ```
 
+### Dependencies
+
+The project requires the following main dependencies:
+- `PyMuPDF`: PDF processing
+- `openai`: OpenAI API client
+- `pandas` and `openpyxl`: Data processing and Excel file handling
+- `python-docx`: Word document generation
+- `python-dotenv`: Environment variable management
+- `numpy`: Numerical operations
+- `requests`: HTTP requests
+- `tqdm`: Progress bars
+
+All dependencies are listed in `requirements.txt`.
+
 ## Usage
 
 Basic usage:
