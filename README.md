@@ -75,6 +75,43 @@ The program creates the following in the `./output` directory:
 - Generation of structured JSON output and easy-to-read Excel spreadsheets
 - Generation of formatted Word report documents
 
+## Word Export Features
+
+The Word export functionality includes several advanced formatting options:
+
+- **Enhanced Table Layout**: 
+  - Left side displays multiple rows of text fields (one field per row)
+  - Right side shows images in a single vertically merged cell
+  - Customizable table borders (can be shown or hidden)
+
+- **Page Formatting**:
+  - Automatic page numbers in "current/total" format (e.g., "3 / 10")
+  - Support for both portrait and landscape orientations
+  - Table continuation across pages for long evidence items
+  - Clear separator lines between evidence items
+
+- **Text Formatting**:
+  - Support for multi-line text in evidence fields
+  - Consistent font styling and paragraph formatting
+  - Proper handling of Chinese and English text
+
+- **Image Handling**:
+  - Automatic resizing and centering of images
+  - Fallback mechanisms for missing images
+  - Support for various image formats
+
+To customize Word export, you can modify the parameters in `export_evidence_to_word()`:
+
+```python
+WordUtils.export_evidence_to_word(
+    excel_file="path/to/excel.xlsx",
+    word_file="path/to/output.docx",
+    output_folder="path/to/images",
+    multi_line_text=True,  # Set to False for single-line text
+    show_borders=True      # Set to False to hide table borders
+)
+```
+
 ## Notes
 
 1. Ensure you have sufficient API call quota, as each PDF page will make one AI API call
