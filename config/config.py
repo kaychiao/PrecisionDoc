@@ -20,4 +20,16 @@ WORD_FONT_SETTINGS = {
 TABLE_SETTINGS = {
     'show_borders_default': True,  # Default setting for showing table borders
     'multi_line_text_default': False,  # Default setting for multi-line text in cells
+    
+    # Table width settings (in inches)
+    'portrait_table_width': 6.27,  # A4 portrait width minus margins
+    'landscape_table_width': 9.69,  # A4 landscape width minus margins
+    
+    # Column ratio settings (percentage as decimal)
+    'text_column_ratio': 0.2,  # Text column takes 20% of table width
+    'image_column_ratio': 0.8,  # Image column takes 80% of table width
+    
+    # Image width setting (in inches)
+    # If not specified, will use 90% of the image column width
+    'image_width': None,  # Set to a specific value to override the automatic calculation
 }

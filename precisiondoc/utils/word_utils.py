@@ -197,8 +197,6 @@ class WordUtils:
                 p._p = None
                 p._element = None
         
-        print("multi_line >>>", multi_line)
-        print("text >>", type(text))
         if multi_line:
             # Split text by lines and create a paragraph for each line
             for line in text.strip().split('\n'):
@@ -261,12 +259,43 @@ class WordUtils:
         table.autofit = False
         table.allow_autofit = False
         
-        # Set table width to page width
-        table.width = Inches(6.27)  # A4 width minus margins
+        # Determine page orientation and set table width accordingly
+        # Get the current section
+        current_section = doc.sections[-1]
+        is_landscape = current_section.orientation == WD_ORIENT.LANDSCAPE
         
-        # Set column widths (40% for text, 60% for image)
-        table.columns[0].width = Inches(2.5)  # Text column
-        table.columns[1].width = Inches(3.77)  # Image column
+        # Set table width based on orientation (accounting for margins) using config settings
+        if is_landscape:
+            table_width = Inches(TABLE_SETTINGS['landscape_table_width'])
+        else:
+            table_width = Inches(TABLE_SETTINGS['portrait_table_width'])
+            
+        # Calculate column widths based on ratio settings from config
+        text_col_width = Inches(table_width.inches * TABLE_SETTINGS['text_column_ratio'])
+        image_col_width = Inches(table_width.inches * TABLE_SETTINGS['image_column_ratio'])
+            
+        table.width = table_width
+        
+        # Set column widths using direct XML manipulation for more reliable width control
+        tbl_grid = table._element.find(".//w:tblGrid", table._element.nsmap)
+        
+        # Clear existing grid columns if any
+        for grid_col in tbl_grid.findall(".//w:gridCol", table._element.nsmap):
+            tbl_grid.remove(grid_col)
+        
+        # Create new grid columns with desired widths
+        col1 = OxmlElement('w:gridCol')
+        col1.set(qn('w:w'), str(int(text_col_width.twips)))  # Text column - 20%
+        tbl_grid.append(col1)
+        
+        col2 = OxmlElement('w:gridCol')
+        col2.set(qn('w:w'), str(int(image_col_width.twips)))  # Image column - 80%
+        tbl_grid.append(col2)
+        
+        # Set column widths at the cell level too
+        for row in table.rows:
+            row.cells[0].width = text_col_width
+            row.cells[1].width = image_col_width
         
         # Set table borders
         if show_borders:
@@ -366,7 +395,7 @@ class WordUtils:
             p.alignment = WD_ALIGN_PARAGRAPH.LEFT
             run = p.add_run(formatted_dict)
             run.font.name = WORD_FONT_SETTINGS['run_font_name']  # Use Microsoft YaHei font for both English and Chinese text
-            run._element.rPr.rFonts.set(qn('w:eastAsia'), WORD_FONT_SETTINGS['run_font_name'])  # 设置东亚字体
+            run._element.rPr.rFonts.set(qn('w:eastAsia'), WORD_FONT_SETTINGS['run_font_name'])  # Set East Asia font
             run.font.size = Pt(WORD_FONT_SETTINGS['run_font_size'])
             
             left_cells = [left_cell]
@@ -377,7 +406,7 @@ class WordUtils:
         return table, left_cells, right_cell
     
     @staticmethod
-    def _add_image_to_cell(cell, row, output_folder):
+    def _add_image_to_cell(cell, row, output_folder, doc=None):
         """
         Add image to table cell
         
@@ -385,11 +414,34 @@ class WordUtils:
             cell: Table cell to add image to
             row: DataFrame row with image information
             output_folder: Folder containing images
+            doc: Word document (for determining orientation)
             
         Returns:
             bool: True if image was found and added, False otherwise
         """
         img_found = False
+        
+        # Calculate image width based on cell width (slightly smaller to allow for margins)
+        # Get the image width from the TABLE_SETTINGS or use 90% of the image column width
+        image_width_setting = TABLE_SETTINGS.get('image_width')
+        if image_width_setting is not None:
+            image_width = Inches(image_width_setting)
+        else:
+            # Determine which table width to use based on orientation
+            if doc and doc.sections and len(doc.sections) > 0:
+                current_section = doc.sections[-1]
+                is_landscape = current_section.orientation == WD_ORIENT.LANDSCAPE
+                if is_landscape:
+                    table_width = TABLE_SETTINGS['landscape_table_width']
+                else:
+                    table_width = TABLE_SETTINGS['portrait_table_width']
+            else:
+                # Default to portrait if we can't determine orientation
+                table_width = TABLE_SETTINGS['portrait_table_width']
+                
+            # Calculate based on table width and image column ratio
+            calculated_width = table_width * TABLE_SETTINGS['image_column_ratio'] * 0.9
+            image_width = Inches(calculated_width)
         
         # First check if image_path is directly provided
         if 'image_path' in row and not pd.isna(row['image_path']):
@@ -399,7 +451,7 @@ class WordUtils:
                     img_p = cell.paragraphs[0]
                     img_p.alignment = WD_ALIGN_PARAGRAPH.CENTER  # Center alignment
                     img_run = img_p.add_run()
-                    img_run.add_picture(img_path, width=Inches(3.5))  # Slightly smaller to fit in cell
+                    img_run.add_picture(img_path, width=image_width)  # Dynamic width based on cell
                     img_found = True
                 except Exception as e:
                     logger.warning(f"Failed to add image {img_path}: {str(e)}")
@@ -425,7 +477,7 @@ class WordUtils:
                         img_p = cell.paragraphs[0]
                         img_p.alignment = WD_ALIGN_PARAGRAPH.CENTER  # Center alignment
                         img_run = img_p.add_run()
-                        img_run.add_picture(img_path, width=Inches(3.5))  # Slightly smaller to fit in cell
+                        img_run.add_picture(img_path, width=image_width)  # Dynamic width based on cell
                         img_found = True
                         break
                     except Exception as e:
@@ -488,8 +540,8 @@ class WordUtils:
                 
                 # Define columns to exclude from evidence text
                 exclude_columns = (
-                    'page_type', 'is_precision_evidence', 'text', 'image_path', 
-                    'page_number', 'success', 'document_type', '解析', '分析', '结论', '文字提取'
+                    'page_type', 'is_precision_evidence',
+                    'page_number', 'success', 'document_type', '解析', '分析', '结论', '文字提取', 'evidence_level'
                 )
                 
                 # Process evidence row by row
@@ -509,7 +561,7 @@ class WordUtils:
                                                                        show_borders=show_borders)
                     
                     # Add image to right cell
-                    WordUtils._add_image_to_cell(right_cell, row, output_folder)
+                    WordUtils._add_image_to_cell(right_cell, row, output_folder, doc)
                     
                     # Add separator line
                     separator = doc.add_paragraph('-' * 50)
