@@ -235,6 +235,70 @@ class WordUtils:
         return evidence_dict
     
     @staticmethod
+    def _rename_evidence_dict_keys(evidence_dict):
+        """
+        Rename specific keys in the evidence dictionary
+        
+        Args:
+            evidence_dict: Dictionary containing evidence fields
+            
+        Returns:
+            dict: Dictionary with renamed keys
+        """
+        renamed_dict = {}
+        key_mapping = {
+            'text': 'resource_sentence',
+            'image_path': 'resource_url'
+        }
+        
+        for key, value in evidence_dict.items():
+            # If the key is in the mapping, use the new name, otherwise keep the original
+            new_key = key_mapping.get(key, key)
+            renamed_dict[new_key] = value
+            
+        return renamed_dict
+    
+    @staticmethod
+    def _sort_evidence_dict(evidence_dict):
+        """
+        Sort the evidence dictionary based on a predefined key sequence
+        
+        Args:
+            evidence_dict: Dictionary containing evidence fields
+            
+        Returns:
+            dict: Sorted dictionary based on predefined key sequence
+        """
+        # Define the key sequence for sorting
+        key_sequence = [
+            'symbol', 
+            'alteration', 
+            'disease_name_cn', 
+            'disease_name_en', 
+            'drug_name_cn', 
+            'drug_name_en', 
+            'drug_combination', 
+            'response_type', 
+            'resource', 
+            'resource_url', 
+            'resource_sentence'
+        ]
+        
+        # Create a dictionary to store the position of each key in the sequence
+        key_positions = {key: i for i, key in enumerate(key_sequence)}
+        
+        # Sort the dictionary items based on the key sequence
+        # Keys in the sequence come first (in the specified order)
+        # Keys not in the sequence come after (in their original order)
+        sorted_items = sorted(
+            evidence_dict.items(),
+            key=lambda item: key_positions.get(item[0], len(key_sequence) + list(evidence_dict.keys()).index(item[0]))
+        )
+        
+        # Return a new ordered dictionary
+        return dict(sorted_items)
+    
+    @staticmethod
     def _create_evidence_table(doc, evidence_dict, multi_line_text=True, show_borders=True):
         """
         Create a table for evidence with text and image placeholders
@@ -248,6 +312,12 @@ class WordUtils:
         Returns:
             tuple: (table, left_cells, right_cell)
         """
+        # Rename text to resource_sentence, image_path to resource_url (key name replacement), others keep the name
+        evidence_dict = WordUtils._rename_evidence_dict_keys(evidence_dict)
+        
+        # Sort the evidence dictionary based on the predefined key sequence
+        evidence_dict = WordUtils._sort_evidence_dict(evidence_dict)
+
         if multi_line_text:
             # Create a table with multiple rows (one row per dictionary item) and 2 columns
             row_count = len(evidence_dict)
@@ -541,7 +611,8 @@ class WordUtils:
                 # Define columns to exclude from evidence text
                 exclude_columns = (
                     'page_type', 'is_precision_evidence',
-                    'page_number', 'success', 'document_type', '解析', '分析', '结论', '文字提取', 'evidence_level'
+                    'page_number', 'success', 'document_type', '解析', '分析', '结论', '文字提取', 
+                    'evidence_level', 'evidence_type', 'evidence_list'
                 )
                 
                 # Process evidence row by row
