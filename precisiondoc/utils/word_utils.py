@@ -1,16 +1,14 @@
 import os
 import pandas as pd
 from docx import Document
-from docx.shared import Pt, Inches, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.style import WD_STYLE_TYPE
-from docx.enum.text import WD_LINE_SPACING
+from docx.shared import Inches, Pt
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
+from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT
 from docx.enum.section import WD_ORIENT, WD_SECTION
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT
-
+import json
+from config.config import WORD_FONT_SETTINGS, TABLE_SETTINGS
 from .log_utils import setup_logger
 
 # Setup logger for this module
@@ -49,8 +47,8 @@ class WordUtils:
         
         # Set heading font
         for run in heading.runs:
-            run.font.name = 'Microsoft YaHei'
-            run.font.size = Pt(16)
+            run.font.name = WORD_FONT_SETTINGS['heading_font_name']
+            run.font.size = Pt(WORD_FONT_SETTINGS['heading_font_size'])
             run.font.bold = True
         
         # Add page numbers
@@ -113,7 +111,7 @@ class WordUtils:
             
             # Apply formatting to the page number text
             run.font.size = Pt(10)
-            run.font.name = 'Arial'
+            run.font.name = WORD_FONT_SETTINGS['page_number_font_name']
     
     @staticmethod
     def apply_paragraph_format(paragraph):
@@ -142,8 +140,8 @@ class WordUtils:
         Args:
             run: Text run object
         """
-        run.font.name = 'Microsoft YaHei'  # Set font to Microsoft YaHei
-        run.font.size = Pt(11)     # Set font size
+        run.font.name = WORD_FONT_SETTINGS['run_font_name']  # Set font to Microsoft YaHei
+        run.font.size = Pt(WORD_FONT_SETTINGS['run_font_size'])     # Set font size
     
     @staticmethod
     def apply_separator_format(paragraph):
@@ -159,7 +157,7 @@ class WordUtils:
         
         # Set separator line font
         for run in paragraph.runs:
-            run.font.name = 'Microsoft YaHei'
+            run.font.name = WORD_FONT_SETTINGS['separator_font_name']
     
     @staticmethod
     def set_section_orientation(section, orientation='portrait'):
@@ -199,6 +197,8 @@ class WordUtils:
                 p._p = None
                 p._element = None
         
+        print("multi_line >>>", multi_line)
+        print("text >>", type(text))
         if multi_line:
             # Split text by lines and create a paragraph for each line
             for line in text.strip().split('\n'):
@@ -224,43 +224,40 @@ class WordUtils:
             exclude_columns: Columns to exclude from text
             
         Returns:
-            str: Formatted evidence text
+            dict: Dictionary containing evidence fields
         """
-        evidence_text = ""
+        evidence_dict = {}
         for col in row.index:
             if col not in exclude_columns:
                 # Check if value is empty, if so display "N/A"
                 if pd.isna(value := row[col]):
-                    display_value = "N/A"
+                    evidence_dict[col] = "N/A"
                 else:
-                    display_value = value
-                evidence_text += f"{col}: {display_value}\n"
-        return evidence_text
+                    evidence_dict[col] = json.dumps(value, indent=4, ensure_ascii=False)
+        return evidence_dict
     
     @staticmethod
-    def _create_evidence_table(doc, evidence_text, multi_line_text=True, show_borders=True):
+    def _create_evidence_table(doc, evidence_dict, multi_line_text=True, show_borders=True):
         """
         Create a table for evidence with text and image placeholders
         
         Args:
             doc: Word document
-            evidence_text: Text to display in left cell
-            multi_line_text: Whether to split text into multiple lines
+            evidence_dict: Dictionary containing evidence fields
+            multi_line_text: Whether to split text into multiple lines (True = multi-row table, False = JSON dict)
             show_borders: Whether to show table borders
             
         Returns:
             tuple: (table, left_cells, right_cell)
         """
-        # Split evidence text into lines if multi_line_text is True
         if multi_line_text:
-            lines = [line for line in evidence_text.strip().split('\n') if line.strip()]
-            row_count = len(lines)
+            # Create a table with multiple rows (one row per dictionary item) and 2 columns
+            row_count = len(evidence_dict)
+            table = doc.add_table(rows=row_count, cols=2)
         else:
-            lines = [evidence_text]
-            row_count = 1
-        
-        # Create a table with multiple rows and 2 columns
-        table = doc.add_table(rows=row_count, cols=2)
+            # Create a table with 1 row and 2 columns for JSON format
+            table = doc.add_table(rows=1, cols=2)
+            
         table.autofit = False
         table.allow_autofit = False
         
@@ -320,30 +317,60 @@ class WordUtils:
             cantSplit.set(qn('w:val'), '0')  # 0 means can split
             trPr.append(cantSplit)
         
-        # Add text content to the left cells
         left_cells = []
+        
         if multi_line_text:
-            for i, line in enumerate(lines):
-                if i < row_count:  # Safety check
+            # Add text content to the left cells - one row per dictionary item
+            for i, (key, value) in enumerate(evidence_dict.items()):
+                if i < len(table.rows):  # Safety check
                     left_cell = table.cell(i, 0)
                     left_cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
                     p = left_cell.paragraphs[0]
                     p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-                    run = p.add_run(line)
-                    WordUtils.apply_run_format(run)
+                    run = p.add_run(f"{key}: {value}")
+                    run.font.name = WORD_FONT_SETTINGS['run_font_name']  # Use Microsoft YaHei font for both English and Chinese text
+                    run._element.rPr.rFonts.set(qn('w:eastAsia'), WORD_FONT_SETTINGS['run_font_name'])  # 设置东亚字体
+                    run.font.size = Pt(WORD_FONT_SETTINGS['run_font_size'])
                     left_cells.append(left_cell)
+                
+            # Merge cells in the right column
+            right_cell = table.cell(0, 1)
+            if row_count > 1:
+                # Merge cells vertically in the right column
+                for i in range(1, row_count):
+                    right_cell.merge(table.cell(i, 1))
         else:
+            # Format the evidence dictionary into a single JSON-style text
             left_cell = table.cell(0, 0)
             left_cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
-            WordUtils.add_text_to_cell(left_cell, evidence_text, multi_line=False)
-            left_cells.append(left_cell)
-        
-        # Merge cells in the right column
-        right_cell = table.cell(0, 1)
-        if row_count > 1:
-            # Merge cells vertically in the right column
-            for i in range(1, row_count):
-                right_cell.merge(table.cell(i, 1))
+            
+            # Create a properly formatted dictionary string without double quotes
+            formatted_dict = "{\n"
+            for i, (key, value) in enumerate(evidence_dict.items()):
+                # Format the value based on its type
+                if isinstance(value, str):
+                    formatted_value = f'{value}'
+                else:
+                    formatted_value = str(value)
+                    
+                # Add comma for all items except the last one
+                if i < len(evidence_dict) - 1:
+                    formatted_dict += f'    "{key}": {formatted_value},\n'
+                else:
+                    formatted_dict += f'    "{key}": {formatted_value}\n'
+            
+            formatted_dict += "}"
+            
+            # Add the formatted dictionary string as a single paragraph with preserved formatting
+            p = left_cell.add_paragraph()
+            p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            run = p.add_run(formatted_dict)
+            run.font.name = WORD_FONT_SETTINGS['run_font_name']  # Use Microsoft YaHei font for both English and Chinese text
+            run._element.rPr.rFonts.set(qn('w:eastAsia'), WORD_FONT_SETTINGS['run_font_name'])  # 设置东亚字体
+            run.font.size = Pt(WORD_FONT_SETTINGS['run_font_size'])
+            
+            left_cells = [left_cell]
+            right_cell = table.cell(0, 1)
         
         right_cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
         
@@ -474,10 +501,10 @@ class WordUtils:
                         WordUtils.set_section_orientation(new_section, 'landscape')
                     
                     # Prepare evidence text
-                    evidence_text = WordUtils._prepare_evidence_text(row, exclude_columns)
+                    evidence_dict = WordUtils._prepare_evidence_text(row, exclude_columns)
                     
                     # Create table with text and image placeholders
-                    _, left_cells, right_cell = WordUtils._create_evidence_table(doc, evidence_text, 
+                    _, left_cells, right_cell = WordUtils._create_evidence_table(doc, evidence_dict, 
                                                                        multi_line_text=multi_line_text,
                                                                        show_borders=show_borders)
                     

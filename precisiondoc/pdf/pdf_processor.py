@@ -208,7 +208,7 @@ class PDFProcessor:
             
             # Export evidence to Word
             word_file = excel_file.replace('.xlsx', '_evidence.docx')
-            WordUtils.export_evidence_to_word(excel_file, word_file, self.output_folder)
+            WordUtils.export_evidence_to_word(excel_file, word_file, self.output_folder, multi_line_text=False)
             
             logger.info(f"Saved results for {pdf_name} to {json_file}, {excel_file}, and {word_file}")
         
@@ -216,3 +216,4 @@ class PDFProcessor:
         if len(json_files) == 1:
             return json_files[0]
         return json_files
+
