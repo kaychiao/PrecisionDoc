@@ -33,3 +33,10 @@ TABLE_SETTINGS = {
     # If not specified, will use 90% of the image column width
     'image_width': None,  # Set to a specific value to override the automatic calculation
 }
+
+# Image formatting settings
+IMAGE_SETTINGS = {
+    'width_ratio': 0.9,  # Image width as a ratio of the column width (90%)
+    'max_height': None,  # Maximum height in inches (None = no limit)
+    'fallback_text': 'Image not available',  # Text to display when image is not found
+}
