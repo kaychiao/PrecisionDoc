@@ -27,7 +27,16 @@ class EvidenceProcessor:
                 if pd.isna(value := row[col]):
                     evidence_dict[col] = "N/A"
                 else:
-                    evidence_dict[col] = json.dumps(value, indent=4, ensure_ascii=False)
+                    # Process based on value type
+                    if isinstance(value, (dict, list, tuple, set)):
+                        # Format complex data types using json.dumps
+                        evidence_dict[col] = json.dumps(value, indent=4, ensure_ascii=False)
+                    elif isinstance(value, str):
+                        # Use string values directly
+                        evidence_dict[col] = value
+                    else:
+                        # Convert other types to string
+                        evidence_dict[col] = str(value)
         return evidence_dict
     
     @staticmethod
@@ -139,7 +148,14 @@ class EvidenceProcessor:
         for key, value in evidence_dict.items():
             if key not in exclude_columns and value and str(value).strip():  # Only include non-empty values and non-excluded columns
                 cell = table.cell(row_index, 0)
-                cell_text = f"{key}: {value}"
+                # Convert value to string carefully to avoid escape characters
+                if isinstance(value, str):
+                    formatted_value = value
+                else:
+                    # For non-string types, convert without introducing escape characters
+                    formatted_value = str(value)
+                
+                cell_text = f"{key}: {formatted_value}"
                 ContentFormatter.add_text_to_cell(cell, cell_text, multi_line=False)
                 left_cells.append(cell)
                 row_index += 1

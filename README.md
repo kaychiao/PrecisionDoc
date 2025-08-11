@@ -97,15 +97,17 @@ The Word export functionality includes several advanced formatting options:
   - Left side displays multiple rows of text fields (one field per row)
   - Right side shows images in a single vertically merged cell
   - Customizable table borders (can be shown or hidden)
+  - Table continuation across pages for long evidence items
 
 - **Page Formatting**:
   - Automatic page numbers in "current/total" format (e.g., "3 / 10")
   - Support for both portrait and landscape orientations
-  - Table continuation across pages for long evidence items
   - Clear separator lines between evidence items
 
 - **Text Formatting**:
-  - Support for multi-line text in evidence fields
+  - Two different formats for evidence data presentation:
+    - Multi-line format: Creates a table with multiple rows, one row for each field
+    - JSON dictionary format: Creates a table with a single row containing a pretty-printed JSON-style dictionary
   - Consistent font styling and paragraph formatting
   - Proper handling of Chinese and English text
 
@@ -114,6 +116,11 @@ The Word export functionality includes several advanced formatting options:
   - Fallback mechanisms for missing images
   - Support for various image formats
 
+- **Customization Options**:
+  - `multi_line_text`: Controls text format (True for multi-line, False for JSON dictionary)
+  - `show_borders`: Controls visibility of table borders
+  - `exclude_columns`: Filters specific columns from being included in the evidence text
+
 To customize Word export, you can modify the parameters in `export_evidence_to_word()`:
 
 ```python
@@ -121,10 +128,30 @@ WordUtils.export_evidence_to_word(
     excel_file="path/to/excel.xlsx",
     word_file="path/to/output.docx",
     output_folder="path/to/images",
-    multi_line_text=True,  # Set to False for single-line text
-    show_borders=True      # Set to False to hide table borders
+    multi_line_text=True,  # Set to False for JSON dictionary format
+    show_borders=True,     # Set to False to hide table borders
+    exclude_columns=["column1", "column2"]  # Columns to exclude from evidence text
 )
 ```
+
+You can also use the `ExportUtils.export_evidence_to_word()` method which provides the same functionality and maintains backward compatibility with legacy code.
+
+## Todo List
+
+The following features and improvements are planned for future releases:
+
+- [ ] Save the the info about origin file is processed or not and other basical info in a json file or database, optional database: MySQL, Redis, PostgreSQL, etc.
+- [ ] Add new function can start from a excel file to word file.
+- [ ] Add support for additional PDF processing libraries for better handling of complex layouts
+- [ ] Implement batch processing with multi-threading to improve performance
+- [ ] Create a web-based user interface for easier interaction
+- [ ] Add support for additional AI models (Claude, Gemini, etc.)
+- [ ] Improve evidence extraction accuracy with domain-specific fine-tuning
+- [ ] Enhance Word export with additional customization options
+- [ ] Add support for exporting to other formats (PDF, HTML, etc.)
+- [ ] Implement automated testing for core functionality
+- [ ] Create comprehensive API documentation
+- [ ] Package the project as a python package.
 
 ## Notes
 
