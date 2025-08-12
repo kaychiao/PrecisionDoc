@@ -4,7 +4,7 @@ Image utilities for Word documents.
 import os
 from docx.shared import Inches
 from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT
-from config.config import IMAGE_SETTINGS
+from precisiondoc.config.config import IMAGE_SETTINGS
 
 class ImageUtils:
     """Handles image-related operations"""

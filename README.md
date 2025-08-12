@@ -11,6 +11,8 @@ This project processes medical guideline PDF files, especially treatment guideli
 
 ## Installation
 
+### From Source
+
 1. Clone this repository
 2. Install dependencies:
 
@@ -18,7 +20,15 @@ This project processes medical guideline PDF files, especially treatment guideli
 pip install -r requirements.txt
 ```
 
-3. Create a `.env` file (refer to `env.example`) and set API keys:
+### Using pip
+
+```bash
+pip install precisiondoc
+```
+
+## Configuration
+
+Create a `.env` file (refer to `env.example`) and set API keys:
 
 ```
 OPENAI_API_KEY=your_openai_api_key
@@ -49,45 +59,119 @@ All dependencies are listed in `requirements.txt`.
 
 ## Usage
 
-Basic usage:
+### Command Line Interface
+
+After installation, you can use the `precisiondoc` command:
 
 ```bash
-python main.py --folder /path/to/pdf/folder --api-key YOUR_API_KEY
+# Process PDF files
+precisiondoc process-pdf --folder /path/to/pdfs --output-folder ./output
+
+# Convert Excel to Word
+precisiondoc excel-to-word --excel-file /path/to/evidence.xlsx --multi-line --show-borders
 ```
 
-Using Alibaba Cloud Qwen API instead of OpenAI:
+### Python API
 
-```bash
-python main.py --folder /path/to/pdf/folder --api-key YOUR_API_KEY --use-qwen
+You can also use PrecisionDoc as a Python package:
+
+```python
+# Import the package
+from precisiondoc import process_pdf, excel_to_word
+
+# Process PDF files
+results = process_pdf(
+    folder_path="/path/to/pdfs",
+    output_folder="./output",
+    api_key="your-api-key",  # Optional, will use env var if not provided
+    base_url="https://api.example.com/v1",  # Optional
+    model="gpt-4"  # Optional
+)
+
+# Convert Excel evidence to Word
+word_file = excel_to_word(
+    excel_file="/path/to/evidence.xlsx",
+    word_file="/path/to/output.docx",  # Optional
+    multi_line_text=True,  # Optional
+    show_borders=True  # Optional
+)
 ```
+
+#### Advanced Usage
+
+For more advanced usage, you can directly use the classes provided by the package:
+
+```python
+from precisiondoc import PDFProcessor, WordUtils, DataUtils
+
+# Create a PDF processor
+processor = PDFProcessor(
+    folder_path="/path/to/pdfs",
+    output_folder="./output",
+    api_key="your-api-key",
+    base_url="https://api.example.com/v1",
+    model="gpt-4"
+)
+
+# Process all PDFs
+results = processor.process_all()
+
+# Save results
+processor.save_consolidated_results(results)
+
+# Work with data utilities
+data_utils = DataUtils()
+df = data_utils.load_excel_file("/path/to/evidence.xlsx")
+
+# Export to Word with custom formatting
+WordUtils.export_evidence_to_word(
+    excel_file=df,
+    word_file="/path/to/output.docx",
+    multi_line_text=True,
+    show_borders=False,
+    exclude_columns=["column1", "column2"]
+)
+```
+
+### Environment Variables
+
+The package uses the following environment variables:
+
+- `API_KEY`: API key for AI service
+- `BASE_URL`: Base URL for API endpoint
+- `TEXT_MODEL`: Model name for text processing
+- `MULTIMODAL_MODEL`: Model name for image processing
+- `LOG_LEVEL`: Logging level (default: INFO)
+
+You can set these variables in a `.env` file or directly in your environment.
 
 ## Parameters
+
+### Command Line Parameters
 
 - `--folder`: Path to the folder containing PDF files (required)
 - `--api-key`: API key for OpenAI or Qwen (if not provided, will be read from environment variables)
 - `--use-qwen`: Use Qwen API instead of OpenAI (optional)
+- `--output-folder`: Output folder path (optional, default: "./output")
+
+### Excel to Word Parameters
+
+- `--excel-file`: Path to Excel file with evidence data (required)
+- `--word-file`: Path to output Word file (optional)
+- `--output-folder`: Output folder path, used to find images (optional)
+- `--multi-line`: Use multi-line text format (default: True)
+- `--show-borders`: Show table borders (default: True)
+- `--exclude-columns`: Columns to exclude from evidence text (optional)
 
 ## Output
 
-The program creates the following in the `./output` directory:
+The program creates the following in the output directory:
 
-- `pages`: Contains split single-page PDF files
-- `images`: (When using Qwen) Contains PDF page image files
-- JSON files: Structured data with AI processing results
-- Excel files: Flattened analysis results
-- Word files: Extracted precision medicine evidence reports
-
-## Features
-
-- Automatic page type identification (content pages, table of contents, references)
-- Extraction of precision medicine evidence, including:
-  - Related genes and alterations
-  - Disease names (Chinese and English)
-  - Drug names (Chinese and English) and drug combinations
-  - Evidence levels and response types
-- Support for text-based (OpenAI and Qwen) and image-based (Qwen only) analysis
-- Generation of structured JSON output and easy-to-read Excel spreadsheets
-- Generation of formatted Word report documents
+- `pages/`: Contains split single-page PDF files
+- `images/`: (When using Qwen) Contains PDF page image files
+- `json/`: JSON files with structured data and AI processing results
+- `excel/`: Excel files with flattened analysis results
+- `word/`: Word files with extracted precision medicine evidence reports
 
 ## Word Export Features
 
@@ -100,62 +184,41 @@ The Word export functionality includes several advanced formatting options:
   - Table continuation across pages for long evidence items
 
 - **Page Formatting**:
-  - Automatic page numbers in "current/total" format (e.g., "3 / 10")
+  - Automatic page numbering in "Page X of Y" format
   - Support for both portrait and landscape orientations
-  - Clear separator lines between evidence items
+  - Table continuation across page breaks
 
 - **Text Formatting**:
-  - Two different formats for evidence data presentation:
-    - Multi-line format: Creates a table with multiple rows, one row for each field
-    - JSON dictionary format: Creates a table with a single row containing a pretty-printed JSON-style dictionary
-  - Consistent font styling and paragraph formatting
-  - Proper handling of Chinese and English text
+  - Support for multi-line text display
+  - Consistent font styling
 
 - **Image Handling**:
-  - Automatic resizing and centering of images
-  - Fallback mechanisms for missing images
-  - Support for various image formats
+  - Automatic resizing and centering
+  - Fallback mechanism for missing images
 
-- **Customization Options**:
-  - `multi_line_text`: Controls text format (True for multi-line, False for JSON dictionary)
-  - `show_borders`: Controls visibility of table borders
-  - `exclude_columns`: Filters specific columns from being included in the evidence text
+- **Customization Parameters**:
+  - `multi_line_text`: Controls text formatting in the left cell
+    - `True`: Creates multiple rows, one for each key-value pair
+    - `False`: Creates a single row with JSON-style dictionary
+  - `show_borders`: Controls table border visibility
+    - `True`: Shows all table borders
+    - `False`: Hides table borders for a cleaner look
 
-To customize Word export, you can modify the parameters in `export_evidence_to_word()`:
+## Future Plans
 
-```python
-WordUtils.export_evidence_to_word(
-    excel_file="path/to/excel.xlsx",
-    word_file="path/to/output.docx",
-    output_folder="path/to/images",
-    multi_line_text=True,  # Set to False for JSON dictionary format
-    show_borders=True,     # Set to False to hide table borders
-    exclude_columns=["column1", "column2"]  # Columns to exclude from evidence text
-)
-```
-
-You can also use the `ExportUtils.export_evidence_to_word()` method which provides the same functionality and maintains backward compatibility with legacy code.
-
-## Todo List
-
-The following features and improvements are planned for future releases:
-
-- [ ] Save the the info about origin file is processed or not and other basical info in a json file or database, optional database: MySQL, Redis, PostgreSQL, etc.
-- [ ] Add new function can start from a excel file to word file.
 - [ ] Add support for additional PDF processing libraries for better handling of complex layouts
 - [ ] Implement batch processing with multi-threading to improve performance
 - [ ] Create a web-based user interface for easier interaction
-- [ ] Add support for additional AI models (Claude, Gemini, etc.)
-- [ ] Improve evidence extraction accuracy with domain-specific fine-tuning
-- [ ] Enhance Word export with additional customization options
-- [ ] Add support for exporting to other formats (PDF, HTML, etc.)
-- [ ] Implement automated testing for core functionality
-- [ ] Create comprehensive API documentation
-- [ ] Package the project as a python package.
+- [ ] Add support for more languages and document types
+- [ ] Enhance evidence extraction with more detailed categorization
+- [ ] Improve image handling and OCR capabilities
+- [ ] Add support for custom templates for Word export
 
-## Notes
+## License
 
-1. Ensure you have sufficient API call quota, as each PDF page will make one AI API call
-2. Processing large PDF files may take a significant amount of time
-3. Image processing features are only available when using Qwen API
-4. Make sure all necessary dependencies are installed in your Python environment
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgements
+
+- OpenAI and Alibaba Cloud for providing the AI APIs
+- The open-source community for the various libraries used in this project

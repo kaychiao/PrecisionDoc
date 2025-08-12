@@ -4,6 +4,7 @@ Evidence processing utilities for Word documents.
 import json
 import pandas as pd
 from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT
+from precisiondoc.utils.word.content_formatting import ContentFormatter
 
 class EvidenceProcessor:
     """Handles evidence data processing operations"""
@@ -135,8 +136,6 @@ class EvidenceProcessor:
         Returns:
             tuple: (left_cells, right_cell) - List of left cells and merged right cell
         """
-        from .content_formatting import ContentFormatter
-        
         if exclude_columns is None:
             exclude_columns = []
         
@@ -182,8 +181,6 @@ class EvidenceProcessor:
         Returns:
             tuple: (left_cell, right_cell) - Left cell and right cell
         """
-        from .content_formatting import ContentFormatter
-        
         # Format evidence as JSON
         json_text = EvidenceProcessor._format_json_dict(evidence_dict)
         

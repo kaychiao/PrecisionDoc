@@ -4,15 +4,15 @@ This module is deprecated and will be removed in a future version.
 Please use precisiondoc.utils.word.WordUtils instead.
 """
 import warnings
-from .word.document_formatting import DocumentFormatter
-from .word.table_utils import TableUtils
-from .word.content_formatting import ContentFormatter
-from .word.evidence_processing import EvidenceProcessor
-from .word.image_utils import ImageUtils
-from .word.export_utils import ExportUtils
-from .word import WordUtils
+from precisiondoc.utils.word.document_formatting import DocumentFormatter
+from precisiondoc.utils.word.table_utils import TableUtils
+from precisiondoc.utils.word.content_formatting import ContentFormatter
+from precisiondoc.utils.word.evidence_processing import EvidenceProcessor
+from precisiondoc.utils.word.image_utils import ImageUtils
+from precisiondoc.utils.word.export_utils import ExportUtils
+from precisiondoc.utils.word import WordUtils
 
-# 发出弃用警告
+# Issue deprecation warning
 warnings.warn(
     "The WordUtils class in word_utils.py is deprecated. "
     "Please use precisiondoc.utils.word.WordUtils instead.",
@@ -20,5 +20,5 @@ warnings.warn(
     stacklevel=2
 )
 
-# 为了保持向后兼容性，重新导出WordUtils类
+# For backward compatibility, re-export WordUtils class
 __all__ = ['WordUtils']

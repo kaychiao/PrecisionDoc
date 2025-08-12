@@ -3,12 +3,13 @@ Word document processing utilities package.
 This package provides utilities for working with Word documents.
 """
 
-from .document_formatting import DocumentFormatter
-from .table_utils import TableUtils
-from .content_formatting import ContentFormatter
-from .evidence_processing import EvidenceProcessor
-from .image_utils import ImageUtils
-from .export_utils import ExportUtils
+from precisiondoc.utils.word.document_formatting import DocumentFormatter
+from precisiondoc.utils.word.table_utils import TableUtils
+from precisiondoc.utils.word.content_formatting import ContentFormatter
+from precisiondoc.utils.word.evidence_processing import EvidenceProcessor
+from precisiondoc.utils.word.image_utils import ImageUtils
+from precisiondoc.utils.word.export_utils import ExportUtils
+from precisiondoc.utils.log_utils import setup_logger
 
 import pandas as pd
 import os
@@ -35,7 +36,6 @@ class WordUtils(DocumentFormatter, TableUtils, ContentFormatter,
         Returns:
             str: Path to the saved Word document
         """
-        from ..log_utils import setup_logger
         logger = setup_logger(__name__)
         
         # Check if excel_file is already a DataFrame

@@ -4,8 +4,10 @@ import json
 from typing import Dict, Any, Optional
 import base64
 from openai import OpenAI
+from dotenv import load_dotenv
 
-from ..utils.log_utils import setup_logger
+from precisiondoc.utils.log_utils import setup_logger
+from precisiondoc.config.promptes import page_type_classification_prompt_cn
 
 # Setup logger for this module
 logger = setup_logger(__name__)
@@ -13,27 +15,31 @@ logger = setup_logger(__name__)
 class QwenClient:
     """Client for interacting with Qwen API using OpenAI compatible mode"""
     
-    def __init__(self, api_key: str = None):
+    def __init__(self, api_key: str = None, base_url: str = None):
         """
         Initialize the Qwen client.
         
         Args:
             api_key: API key for Qwen. If None, will try to load from environment variables.
+            base_url: Base URL for Qwen API. If None, will try to load from environment variables.
         """
         if api_key is None:
-            self.api_key = os.getenv("QWEN_API_KEY")
+            self.api_key = os.getenv("API_KEY")
             if not self.api_key:
-                raise ValueError("QWEN_API_KEY environment variable not set")
+                raise ValueError("API_KEY environment variable not set")
         else:
             self.api_key = api_key
         
-        # Get base URL from environment or use default
-        base_url = os.getenv("QWEN_BASES_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
+        # Get base URL from parameter, environment or use default
+        if base_url:
+            self.base_url = base_url
+        else:
+            self.base_url = os.getenv("QWEN_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
         
         # Initialize OpenAI client with DashScope compatible endpoint
         self.client = OpenAI(
             api_key=self.api_key,
-            base_url=base_url
+            base_url=self.base_url
         )
         
         # Get model names from environment variables or use defaults
@@ -111,7 +117,6 @@ class QwenClient:
 # Example usage
 if __name__ == "__main__":
     # Load environment variables
-    from dotenv import load_dotenv
     load_dotenv()
     
     # Create client

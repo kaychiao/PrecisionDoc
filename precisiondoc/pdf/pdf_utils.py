@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import List, Dict
 from collections import defaultdict
 
-from ..utils.log_utils import setup_logger
+from precisiondoc.utils.log_utils import setup_logger
 
 # Setup logger for this module
 logger = setup_logger(__name__)

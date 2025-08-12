@@ -4,7 +4,7 @@ import pandas as pd
 from typing import Dict, List, Any
 from datetime import datetime
 
-from .log_utils import setup_logger
+from precisiondoc.utils.log_utils import setup_logger
 
 # Setup logger for this module
 logger = setup_logger(__name__)
@@ -31,19 +31,11 @@ class DataUtils:
             
         # Ensure output directory exists
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
-            
-        # For testing purposes, load from existing file
-        json_file = os.path.join(output_folder, "all_results_20250717_094112.json")
-        if os.path.exists(json_file):
-            with open(json_file, 'r', encoding='utf-8') as f:
-                results = json.load(f)
-            output_file = json_file
-            logger.info(f"Loaded existing results from {json_file}")
-        else:
-            # Save results to JSON file
-            with open(output_file, 'w', encoding='utf-8') as f:
-                json.dump(results, f, ensure_ascii=False, indent=2)
-            logger.info(f"Consolidated results saved to {output_file}")
+        
+        # Save results to JSON file
+        with open(output_file, 'w', encoding='utf-8') as f:
+            json.dump(results, f, ensure_ascii=False, indent=2)
+        logger.info(f"Consolidated results saved to JSON file: {output_file}")
         
         return output_file
     

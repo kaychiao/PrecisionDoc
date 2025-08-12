@@ -7,7 +7,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
 from docx.enum.section import WD_ORIENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from config.config import WORD_FONT_SETTINGS
+from precisiondoc.config.config import WORD_FONT_SETTINGS
 
 class DocumentFormatter:
     """Handles document-level formatting operations"""

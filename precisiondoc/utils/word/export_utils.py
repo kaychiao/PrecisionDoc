@@ -3,9 +3,16 @@ Export utilities for Word documents.
 """
 import os
 import pandas as pd
+import logging
+from datetime import datetime
 from docx import Document
 from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from precisiondoc.utils.word.document_formatting import DocumentFormatter
+from precisiondoc.utils.word.evidence_processing import EvidenceProcessor
+from precisiondoc.utils.word.content_formatting import ContentFormatter
+from precisiondoc.utils.word.table_utils import TableUtils
+from precisiondoc.utils.word.image_utils import ImageUtils
 
 class ExportUtils:
     """Handles document export operations"""
@@ -26,10 +33,6 @@ class ExportUtils:
         Returns:
             table: Created table
         """
-        from .evidence_processing import EvidenceProcessor
-        from .table_utils import TableUtils
-        from .image_utils import ImageUtils
-        
         if exclude_columns is None:
             exclude_columns = ['is_precision_evidence', 'page_number', 'document_type']
         
@@ -85,8 +88,6 @@ class ExportUtils:
         Args:
             doc: Word document
         """
-        from .content_formatting import ContentFormatter
-        
         # Add separator line
         separator = doc.add_paragraph('─' * 100)
         ContentFormatter.apply_separator_format(separator)
@@ -95,7 +96,7 @@ class ExportUtils:
         doc.add_section()
     
     @staticmethod
-    def export_evidence_to_word(excel_file, word_file, output_folder=None, multi_line_text=True, show_borders=True, exclude_columns=None):
+    def export_evidence_to_word(excel_file, word_file=None, output_folder=None, multi_line_text=True, show_borders=True, exclude_columns=None):
         """
         Export precision evidence from Excel to Word document
         
@@ -107,11 +108,6 @@ class ExportUtils:
             show_borders: If True, show table borders
             exclude_columns: Columns to exclude from evidence text
         """
-        from .document_formatting import DocumentFormatter
-        from .evidence_processing import EvidenceProcessor
-        from .content_formatting import ContentFormatter
-        import logging
-        
         logger = logging.getLogger(__name__)
         
         try:
@@ -121,6 +117,23 @@ class ExportUtils:
             else:
                 # Read Excel file into DataFrame
                 df = pd.read_excel(excel_file)
+            
+            # If word_file is None, generate a default output path
+            if word_file is None:
+                # Create output directory in current working directory if it doesn't exist
+                output_dir = os.path.join(os.getcwd(), "output", "word")
+                
+                if isinstance(excel_file, str):
+                    # Get the base name of the Excel file and change extension to .docx
+                    base_name = os.path.basename(excel_file)
+                    base_name_no_ext = os.path.splitext(base_name)[0]
+                    word_file = os.path.join(output_dir, f"{base_name_no_ext}.docx")
+                else:
+                    # If excel_file is a DataFrame, use a timestamp-based name
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    word_file = os.path.join(output_dir, f"evidence_export_{timestamp}.docx")
+                
+                logger.info(f"No output file specified, using default: {word_file}")
             
             # Check if 'is_precision_evidence' column exists
             if 'is_precision_evidence' in df.columns:
@@ -171,11 +184,14 @@ class ExportUtils:
                     ContentFormatter.apply_separator_format(separator)
                 
                 # Create directory if it doesn't exist
-                os.makedirs(os.path.dirname(word_file), exist_ok=True)
-                
-                # Save Word document
-                doc.save(word_file)
-                logger.info(f"Evidence exported to Word file: {word_file}")
+                if word_file is not None:
+                    os.makedirs(os.path.dirname(word_file), exist_ok=True)
+                    
+                    # Save Word document
+                    doc.save(word_file)
+                    logger.info(f"Evidence exported to Word file: {word_file}")
+                else:
+                    logger.error("No output file path provided and could not generate a default path")
                 return word_file
             else:
                 logger.warning("No 'is_precision_evidence' column found in Excel file")
