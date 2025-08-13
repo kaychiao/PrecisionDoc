@@ -204,6 +204,38 @@ The Word export functionality includes several advanced formatting options:
     - `True`: Shows all table borders
     - `False`: Hides table borders for a cleaner look
 
+## Latest Features
+
+### 1:1 PDF Processing Mapping
+
+PrecisionDoc now ensures a strict 1:1 mapping between original PDF files and their output files (JSON, Excel, Word). This means:
+- Each original PDF generates exactly one output file of each type
+- Output files are initialized at the start of processing each PDF
+- No redundant data accumulation on repeated runs
+- Improved data organization and traceability
+
+### Page Metadata Enhancement
+
+Each processed page now includes additional metadata:
+- Current page number
+- Total page count in the document
+- Original PDF filename
+- This enriches the JSON output with useful pagination context for better organization and reference.
+
+### Modular PDF Processing
+
+The PDF processing pipeline has been refactored into smaller, more maintainable functions:
+- `_initialize_output_files`: Handles initialization of JSON, Excel, and Word output files
+- `_process_pdf_pages`: Processes individual PDF pages and saves intermediate results
+- `_save_final_results`: Saves final results to JSON, Excel, and Word files
+
+### Direct Excel-to-Word Conversion
+
+Users can now convert Excel files to formatted Word documents without needing to process PDF files first:
+- Supports various formatting options including multi-line text vs. JSON format
+- Provides table borders control and column exclusion options
+- Accessible via both command line and Python API
+
 ## Future Plans
 
 - [ ] Add support for additional PDF processing libraries for better handling of complex layouts

@@ -64,6 +64,11 @@ def main():
     parser.add_argument("--excel-to-word", action="store_true", help="Convert Excel evidence to Word")
     parser.add_argument("--excel-file", help="Excel file to convert to Word (required if --excel-to-word is used)")
     parser.add_argument("--word-file", help="Output Word file path (optional)")
+    parser.add_argument("--multi-line-text", action="store_true", default=True, 
+                        help="Use multi-line text format in Word export (default: True)")
+    parser.add_argument("--show-borders", action="store_true", default=True,
+                        help="Show borders in Word export tables (default: True)")
+    parser.add_argument("--exclude-columns", help="Comma-separated list of columns to exclude from Word export")
     
     args = parser.parse_args()
     
@@ -88,12 +93,18 @@ def main():
         
         print(f"Converting Excel file to Word: {args.excel_file}")
         try:
+            # Parse exclude_columns if provided
+            exclude_cols = None
+            if args.exclude_columns:
+                exclude_cols = [col.strip() for col in args.exclude_columns.split(',')]
+            
             word_file = excel_to_word(
                 excel_file=args.excel_file,
                 word_file=args.word_file,
                 output_folder=args.output_folder,
-                multi_line_text=True,
-                show_borders=True
+                multi_line_text=args.multi_line_text,
+                show_borders=args.show_borders,
+                exclude_columns=exclude_cols
             )
             print(f"Word file created: {word_file}")
             return
@@ -114,8 +125,8 @@ def main():
     print(f"Using {'Qwen' if args.use_qwen else 'OpenAI'} API")
     
     try:
-        # Use the convenience function from the package
-        results = process_pdf(
+        # Use the PDFProcessor class directly to demonstrate its features
+        processor = PDFProcessor(
             folder_path=args.folder,
             api_key=args.api_key,
             output_folder=args.output_folder,
@@ -123,11 +134,20 @@ def main():
             model=args.model
         )
         
+        # Process all PDFs with 1:1 mapping between original PDFs and output files
+        results = processor.process_all()
+        
         # Print summary
         print("\nProcessing Summary:")
         for doc_type, page_results in results.items():
             success_count = sum(1 for result in page_results if result.get("success", False))
             print(f"- {doc_type}: Processed {len(page_results)} pages, {success_count} successful")
+            
+            # Show page metadata example from the first successful page
+            for result in page_results:
+                if result.get("success", False):
+                    print(f"  - Page metadata example: Page {result.get('page_number')}/{result.get('total_pages')} from {result.get('raw_pdf_name')}")
+                    break
     
     except Exception as e:
         print(f"Error processing PDFs: {str(e)}")
