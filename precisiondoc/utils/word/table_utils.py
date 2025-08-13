@@ -5,7 +5,7 @@ from docx.shared import Inches
 from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from precisiondoc.config.config import TABLE_SETTINGS
+from precisiondoc.config.document_format_settings import TABLE_SETTINGS
 
 class TableUtils:
     """Handles table-related operations"""

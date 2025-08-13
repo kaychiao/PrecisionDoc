@@ -3,7 +3,7 @@ Content formatting utilities for Word documents.
 """
 from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
-from precisiondoc.config.config import WORD_FONT_SETTINGS
+from precisiondoc.config.document_format_settings import WORD_FONT_SETTINGS
 
 class ContentFormatter:
     """Handles content-level formatting operations"""
