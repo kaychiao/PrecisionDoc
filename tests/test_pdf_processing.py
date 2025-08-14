@@ -34,8 +34,8 @@ def test_process_single_pdf_basic():
     
     # Process a test PDF file
     results = process_single_pdf(
-        pdf_path="tests/test_files/lung_screening_Version_1.2025.pdf",
-        doc_type="lung_screening_test",
+        pdf_path="tests/test_files/test_single_page.pdf",
+        doc_type="test_single_page",
         output_folder="tests/test_output",
         base_url=os.environ.get("BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"),
         api_key=os.environ.get("API_KEY"),
