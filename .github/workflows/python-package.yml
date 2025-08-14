@@ -31,8 +31,8 @@ jobs:
           
       - name: Install dependencies
         run: |
-          uv pip install flake8 pytest
-          uv pip install -e .
+          uv pip install --system flake8 pytest
+          uv pip install --system -e .
           
       - name: Lint with flake8
         run: |
@@ -61,8 +61,8 @@ jobs:
           
       - name: Install dependencies
         run: |
-          uv pip install pytest pytest-cov
-          uv pip install -e .
+          uv pip install --system pytest pytest-cov
+          uv pip install --system -e .
           
       - name: Test with pytest
         run: |
@@ -82,7 +82,7 @@ jobs:
           
       - name: Install dependencies
         run: |
-          uv pip install build twine
+          uv pip install --system build twine
           
       - name: Build package
         run: |
@@ -91,4 +91,3 @@ jobs:
       - name: Check package
         run: |
           python -m twine check dist/*
-
