@@ -7,17 +7,17 @@ from dotenv import load_dotenv
 load_dotenv()
 
 client = OpenAI(
-    base_url=os.getenv("QWEN_BASES_URL"),
-    api_key="no-key-required"
+    base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+    api_key=os.environ.get("API_KEY")
 )
 
-png_file = "test_images/page_029.png"
-jpg_file = "test_images/qwen3-coder-main.jpg"
+png_file = "tests/test_images/page_029.png"
+jpg_file = "tests/test_images/qwen3-coder-main.jpg"
 
 with open(jpg_file, "rb") as image_file:
     image_data = base64.b64encode(image_file.read()).decode("utf-8")
 
-prompt = "请描述这张图片的内容"
+prompt = "Please describe the content of this image."
 
 
 image_url = f"data:image/png;base64,{image_data}"
@@ -36,7 +36,7 @@ messages.append(user_message)
 
 try:
     completion = client.chat.completions.create(
-        model="Qwen2.5-VL",
+        model="qwen-vl-max",
         messages=messages,
         temperature=0.3,
     )

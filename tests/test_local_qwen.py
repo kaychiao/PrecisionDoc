@@ -6,14 +6,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 client = OpenAI(
-    base_url=os.getenv("QWEN_BASES_URL"),
-    api_key="no-key-required"
+    base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+    api_key=os.environ.get("API_KEY")
 )
 
 response = client.chat.completions.create(
-    model="Qwen3-32B",
-    # model="/mnt/ai/models/Qwen/Qwen3-32B",
-    messages=[{"role": "user", "content": "你好！你是谁？"}],
+    model="qwen-plus",
+    messages=[{"role": "user", "content": "What is the capital of China?"}],
     max_tokens=512
 )
 print(response.choices[0].message.content)

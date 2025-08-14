@@ -5,3 +5,5 @@ __pycache__
 *__pycache__*
 .env
 /logs
+/dist
+/tests/test_output
