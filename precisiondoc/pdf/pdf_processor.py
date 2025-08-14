@@ -240,6 +240,60 @@ class PDFProcessor:
         # Save consolidated results after each document is processed
         self.save_consolidated_results({doc_type: page_results})
 
+    def save_consolidated_results(self, results: Dict[str, List[Dict]]) -> str:
+        """
+        Save consolidated results to a JSON file and an Excel file.
+        
+        Args:
+            results: Dictionary mapping document type to list of page results
+        
+        Returns:
+            Path to the output file
+        """
+        # This method is now simplified as most file operations are handled in process_all
+        # It's kept for backward compatibility and potential future consolidated output
+        
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        consolidated_file = os.path.join(self.output_folder, f"consolidated_results_{timestamp}.json")
+        
+        # Save consolidated JSON results
+        with open(consolidated_file, 'w', encoding='utf-8') as f:
+            json.dump(results, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"Saved consolidated results to {consolidated_file}")
+        return consolidated_file
+
+    def process_single(self, pdf_path: str, doc_type: str = None) -> Dict[str, List[Dict]]:
+        """
+        Process a single PDF file.
+        
+        Args:
+            pdf_path: Path to the PDF file
+            doc_type: Document type/name. If None, will use the PDF filename without extension.
+            
+        Returns:
+            Dictionary mapping document type to list of page results
+        """
+        # If doc_type is not provided, use the PDF filename without extension
+        if doc_type is None:
+            doc_type = os.path.splitext(os.path.basename(pdf_path))[0]
+            
+        logger.info(f"Processing single PDF {doc_type}: {os.path.basename(pdf_path)}")
+        
+        # Initialize output files
+        json_file, excel_file, word_file = self._initialize_output_files(doc_type)
+        
+        # Process PDF pages
+        page_results = self._process_pdf_pages(doc_type, pdf_path, json_file)
+        
+        # Store results
+        results = {doc_type: page_results}
+        
+        # Save final results
+        self._save_final_results(doc_type, page_results, json_file, excel_file, word_file)
+        
+        return results
+
     def process_all(self) -> Dict[str, List[Dict]]:
         """
         Process all PDFs in the folder.
@@ -273,26 +327,3 @@ class PDFProcessor:
             self._save_final_results(doc_type, page_results, json_file, excel_file, word_file)
         
         return results
-    
-    def save_consolidated_results(self, results: Dict[str, List[Dict]]) -> str:
-        """
-        Save consolidated results to a JSON file and an Excel file.
-        
-        Args:
-            results: Dictionary mapping document type to list of page results
-        
-        Returns:
-            Path to the output file
-        """
-        # This method is now simplified as most file operations are handled in process_all
-        # It's kept for backward compatibility and potential future consolidated output
-        
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        consolidated_file = os.path.join(self.output_folder, f"consolidated_results_{timestamp}.json")
-        
-        # Save consolidated JSON results
-        with open(consolidated_file, 'w', encoding='utf-8') as f:
-            json.dump(results, f, ensure_ascii=False, indent=2)
-        
-        logger.info(f"Saved consolidated results to {consolidated_file}")
-        return consolidated_file

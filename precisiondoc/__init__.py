@@ -35,6 +35,11 @@ Convert Excel evidence to Word:
 
 __version__ = '0.1.0'
 
+# Import standard libraries
+import os
+import tempfile
+import shutil
+
 # Import core components for API exposure
 from .pdf.pdf_processor import PDFProcessor
 from .utils.word import WordUtils, ExportUtils
@@ -65,6 +70,35 @@ def process_pdf(folder_path, api_key=None, output_folder="./output", base_url=No
     )
     results = processor.process_all()
     processor.save_consolidated_results(results)
+    return results
+
+def process_single_pdf(pdf_path, doc_type=None, api_key=None, output_folder="./output", base_url=None, model=None):
+    """
+    Process a single PDF file and generate evidence extraction results.
+    
+    Args:
+        pdf_path (str): Path to the PDF file to process
+        doc_type (str, optional): Document type/name. If None, will use the PDF filename without extension.
+        api_key (str, optional): API key for AI service. If None, will try to load from environment variable API_KEY.
+        output_folder (str, optional): Output folder for results. Defaults to "./output".
+        base_url (str, optional): Base URL for API. If None, will try to load from environment variable BASE_URL.
+        model (str, optional): Model to use for API calls. If None, will try to load from environment variable TEXT_MODEL.
+        
+    Returns:
+        dict: Dictionary with processing results for the PDF
+    """
+    # Create processor with the PDF's parent folder
+    processor = PDFProcessor(
+        folder_path=os.path.dirname(pdf_path),
+        api_key=api_key,
+        output_folder=output_folder,
+        base_url=base_url,
+        model=model
+    )
+    
+    # Process the single PDF file
+    results = processor.process_single(pdf_path, doc_type)
+    
     return results
 
 def excel_to_word(excel_file, word_file=None, output_folder=None, 
@@ -100,5 +134,6 @@ __all__ = [
     'DataUtils',
     'ImageUtils',
     'process_pdf',
+    'process_single_pdf',
     'excel_to_word',
 ]

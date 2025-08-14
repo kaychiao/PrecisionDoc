@@ -77,13 +77,23 @@ You can also use PrecisionDoc as a Python package:
 
 ```python
 # Import the package
-from precisiondoc import process_pdf, excel_to_word
+from precisiondoc import process_pdf, excel_to_word, process_single_pdf
 
 # Process PDF files
 results = process_pdf(
     folder_path="/path/to/pdfs",
     output_folder="./output",
     api_key="your-api-key",  # Optional, will use env var if not provided
+    base_url="https://api.example.com/v1",  # Optional
+    model="gpt-4"  # Optional
+)
+
+# Process a single PDF file
+results = process_single_pdf(
+    pdf_path="/path/to/document.pdf",
+    doc_type="DocumentName",  # Optional, will use filename if not provided
+    output_folder="./output",  # Optional
+    api_key="your-api-key",  # Optional
     base_url="https://api.example.com/v1",  # Optional
     model="gpt-4"  # Optional
 )
@@ -228,6 +238,14 @@ The PDF processing pipeline has been refactored into smaller, more maintainable 
 - `_initialize_output_files`: Handles initialization of JSON, Excel, and Word output files
 - `_process_pdf_pages`: Processes individual PDF pages and saves intermediate results
 - `_save_final_results`: Saves final results to JSON, Excel, and Word files
+
+### Single PDF Processing
+
+PrecisionDoc now supports processing individual PDF files directly:
+- Process a specific PDF file without needing to place it in a dedicated folder
+- Generate the same comprehensive outputs (JSON, Excel, Word) as with folder processing
+- Maintain the same high-quality analysis and evidence extraction
+- Useful for targeted processing of individual documents
 
 ### Direct Excel-to-Word Conversion
 
