@@ -33,7 +33,7 @@ Convert Excel evidence to Word:
     ... )
 """
 
-__version__ = '0.1.1'
+__version__ = '0.1.1rc1'
 
 # Import standard libraries
 import os

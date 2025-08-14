@@ -43,7 +43,7 @@ def get_logger(name=None, level=None):
     Returns:
         Configured logger instance
     """
-    global _configured, _loggers
+    global _configured
     
     # Use the provided name or default to root logger
     logger_name = name if name else ''

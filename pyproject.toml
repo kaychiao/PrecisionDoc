@@ -1,6 +1,6 @@
 [project]
 name = "precisiondoc"
-version = "0.1.2"
+version = "0.1.1rc1"
 description = "Document processing and evidence extraction package for precision oncology"
 readme = "README.md"
 authors = [
