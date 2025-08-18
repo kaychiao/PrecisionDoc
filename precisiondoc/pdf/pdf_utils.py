@@ -25,16 +25,15 @@ def normalize_filename(filename: str) -> str:
     normalized = re.sub(r'[^\w\-\.]', '_', filename)
     return normalized
 
-def find_latest_pdfs(folder_path: str) -> Dict[str, str]:
+def find_all_pdfs(folder_path: str) -> Dict[str, str]:
     """
-    Find the latest version of each type of PDF in the folder.
-    Recursively searches through all subdirectories.
+    Find all PDF files in the folder and its subfolders.
     
     Args:
         folder_path: Path to the folder containing PDF files
         
     Returns:
-        Dictionary mapping document type to the path of its latest version
+        Dictionary mapping PDF filename (without extension) to its full path
     """
     # Recursively find all PDF files
     pdf_files = []
@@ -43,67 +42,18 @@ def find_latest_pdfs(folder_path: str) -> Dict[str, str]:
             if file.lower().endswith('.pdf'):
                 pdf_files.append(os.path.join(root, file))
     
-    logger.info(f"Found {len(pdf_files)} PDF files in {folder_path} and its subdirectories")
+    logger.info(f"Found {len(pdf_files)} PDF files in {folder_path} and its subfolders")
 
-    # Group files by document type
-    document_groups = defaultdict(list)
-    
+    # Create a dictionary mapping filename (without extension) to path
+    all_pdfs = {}
     for pdf_path in pdf_files:
         filename = os.path.basename(pdf_path)
-        # Extract document type and year using regex
-        # Pattern matches various document naming patterns:
-        # 1. CSCO pattern: "CSCO黑色素瘤诊疗指南2024_20241225015714.pdf"
-        # 2. English CSCO: "Chinese Society of Clinical Oncology (CSCO) diagnosis and treatment guidelines for colorectal cancer 2018 (English version)_20193211500.pdf"
-        # 3. Year-prefixed: "2020论文集_2020论文集.pdf", "2024论文集_20241114111047.pdf"
-        # 4. Version-suffixed: "lung_screening_Version_1.2025.pdf", "lung_screening-patient_Version_2023.pdf"
-        
-        # Try different patterns in sequence
-        doc_type = None
-        year = None
-        
-        # Pattern 1: CSCO pattern
-        match = re.match(r'(CSCO[^0-9]+)(\d{4}).*\.pdf', filename)
-        if match:
-            doc_type, year = match.groups()
-        
-        # Pattern 2: English CSCO with year
-        if not match:
-            match = re.search(r'(Chinese Society of Clinical Oncology.*?)(\d{4}).*\.pdf', filename, re.IGNORECASE)
-            if match:
-                doc_type, year = match.groups()
-        
-        # Pattern 3: Year-prefixed documents (论文集)
-        if not match:
-            match = re.match(r'(\d{4})(论文集).*\.pdf', filename)
-            if match:
-                year, suffix = match.groups()
-                doc_type = suffix  # Use "论文集" as the document type
-        
-        # Pattern 4: Version-suffixed documents
-        if not match:
-            match = re.search(r'(.*?_?[Vv]ersion_?\d*\.?)(\d{4}).*\.pdf', filename)
-            if match:
-                doc_type, year = match.groups()
-        
-        # Pattern 5: Version-suffixed documents with hyphen
-        if not match:
-            match = re.search(r'(.*?-.*?_?[Vv]ersion_?)(\d{4}).*\.pdf', filename)
-            if match:
-                doc_type, year = match.groups()
-        
-        if doc_type and year:
-            document_groups[doc_type].append((int(year), pdf_path))
+        # Use filename without extension as the key
+        doc_type = os.path.splitext(filename)[0]
+        all_pdfs[doc_type] = pdf_path
+        logger.info(f"Found PDF: {filename} at {pdf_path}")
     
-    # Find the latest version of each document type
-    latest_pdfs = {}
-    for doc_type, versions in document_groups.items():
-        # Sort by year (descending)
-        versions.sort(reverse=True)
-        latest_year, latest_path = versions[0]
-        latest_pdfs[doc_type] = latest_path
-        logger.info(f"Latest version of {doc_type}: {os.path.basename(latest_path)} (Year: {latest_year})")
-    
-    return latest_pdfs
+    return all_pdfs
 
 def split_pdf(pdf_path: str, output_folder: str) -> List[str]:
     """

@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 
 # Import utility modules
-from precisiondoc.pdf.pdf_utils import find_latest_pdfs, split_pdf, extract_text_from_pdf, convert_pdf_to_image
+from precisiondoc.pdf.pdf_utils import find_all_pdfs, split_pdf, extract_text_from_pdf, convert_pdf_to_image
 from precisiondoc.ai.ai_client import AIClient
 from precisiondoc.utils.word_utils import WordUtils
 from precisiondoc.utils.data_utils import DataUtils
@@ -117,23 +117,25 @@ class PDFProcessor:
             
         return result
     
-    def _initialize_output_files(self, doc_type: str) -> tuple:
+    def _initialize_output_files(self, doc_type: str, pdf_path: str) -> tuple:
         """
         Initialize output files for a document.
         
         Args:
             doc_type: Document type/name
+            pdf_path: Path to the PDF file
             
         Returns:
             Tuple of (json_file, excel_file, word_file) paths
         """
-        # Normalize PDF name for file naming
-        normalized_pdf_name = re.sub(r'[^\w\-\.]', '_', doc_type)
+        # Get the original PDF filename
+        original_filename = os.path.basename(pdf_path)
+        pdf_name_without_ext = os.path.splitext(original_filename)[0]
         
-        # Initialize output files at the beginning to avoid redundant data
-        json_file = os.path.join(self.json_folder, f"{normalized_pdf_name}_results.json")
-        excel_file = os.path.join(self.excel_folder, f"{normalized_pdf_name}_results.xlsx")
-        word_file = os.path.join(self.word_folder, f"{normalized_pdf_name}_results.docx")
+        # Initialize output files using the original PDF filename
+        json_file = os.path.join(self.json_folder, f"{pdf_name_without_ext}_results.json")
+        excel_file = os.path.join(self.excel_folder, f"{pdf_name_without_ext}_results.xlsx")
+        word_file = os.path.join(self.word_folder, f"{pdf_name_without_ext}_results.docx")
         
         # Create empty files to clear any previous content
         with open(json_file, 'w', encoding='utf-8') as f:
@@ -281,7 +283,7 @@ class PDFProcessor:
         logger.info(f"Processing single PDF {doc_type}: {os.path.basename(pdf_path)}")
         
         # Initialize output files
-        json_file, excel_file, word_file = self._initialize_output_files(doc_type)
+        json_file, excel_file, word_file = self._initialize_output_files(doc_type, pdf_path)
         
         # Process PDF pages
         page_results = self._process_pdf_pages(doc_type, pdf_path, json_file)
@@ -296,26 +298,26 @@ class PDFProcessor:
 
     def process_all(self) -> Dict[str, List[Dict]]:
         """
-        Process all PDFs in the folder.
+        Process all PDFs in the folder and its subfolders.
         
         Returns:
             Dictionary mapping document type to list of page results
         """
-        # Find latest PDFs
-        latest_pdfs = find_latest_pdfs(self.folder_path)
+        # Find all PDFs in the folder and its subfolders
+        all_pdfs = find_all_pdfs(self.folder_path)
         
-        if not latest_pdfs:
-            logger.warning(f"No PDF files found in {self.folder_path}")
+        if not all_pdfs:
+            logger.warning(f"No PDF files found in {self.folder_path} or its subfolders")
             return {}
         
         results = {}
 
         # Process each PDF
-        for doc_type, pdf_path in latest_pdfs.items():
+        for doc_type, pdf_path in all_pdfs.items():
             logger.info(f"Processing {doc_type}: {os.path.basename(pdf_path)}")
             
             # Initialize output files
-            json_file, excel_file, word_file = self._initialize_output_files(doc_type)
+            json_file, excel_file, word_file = self._initialize_output_files(doc_type, pdf_path)
             
             # Process PDF pages
             page_results = self._process_pdf_pages(doc_type, pdf_path, json_file)
