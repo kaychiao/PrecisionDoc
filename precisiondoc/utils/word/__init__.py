@@ -20,7 +20,7 @@ class WordUtils(DocumentFormatter, TableUtils, ContentFormatter,
     """Word document processing utility class - Facade for all Word utilities"""
     
     @staticmethod
-    def export_evidence_to_word(excel_file, word_file, output_folder=None, multi_line_text=True, show_borders=True, exclude_columns=None):
+    def export_evidence_to_word(excel_file, word_file, output_folder=None, multi_line_text=True, show_borders=True, exclude_columns=None, page_settings=None):
         """
         Export precision evidence from Excel to Word document.
         This method provides backward compatibility with the original function signature.
@@ -32,6 +32,9 @@ class WordUtils(DocumentFormatter, TableUtils, ContentFormatter,
             multi_line_text: If True, split text by newlines in the left cell
             show_borders: If True, show table borders
             exclude_columns: Columns to exclude from evidence text
+            page_settings: Dictionary with page settings for Word document.
+                          Supported keys: 'orientation' ('portrait' or 'landscape'),
+                          'margins' (dict with 'left', 'right', 'top', 'bottom' in inches)
             
         Returns:
             str: Path to the saved Word document
@@ -60,16 +63,20 @@ class WordUtils(DocumentFormatter, TableUtils, ContentFormatter,
                 
             # Call the new implementation with the DataFrame
             return ExportUtils.export_evidence_to_word(evidence_df, word_file, 
+                                                     output_folder=output_folder,
                                                      multi_line_text=multi_line_text, 
                                                      show_borders=show_borders,
-                                                     exclude_columns=exclude_columns)
+                                                     exclude_columns=exclude_columns,
+                                                     page_settings=page_settings)
         else:
             logger.info("No 'is_precision_evidence' column found, using all rows")
             # If no filtering needed, use the entire DataFrame
             return ExportUtils.export_evidence_to_word(df, word_file, 
+                                                     output_folder=output_folder,
                                                      multi_line_text=multi_line_text,
                                                      show_borders=show_borders,
-                                                     exclude_columns=exclude_columns)
+                                                     exclude_columns=exclude_columns,
+                                                     page_settings=page_settings)
 
 # 导出主要类，使其可以直接从precisiondoc.utils.word导入
 __all__ = [

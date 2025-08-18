@@ -6,7 +6,7 @@ import pandas as pd
 import logging
 from datetime import datetime
 from docx import Document
-from docx.shared import Pt
+from docx.shared import Pt, Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from precisiondoc.utils.word.document_formatting import DocumentFormatter
 from precisiondoc.utils.word.evidence_processing import EvidenceProcessor
@@ -96,106 +96,128 @@ class ExportUtils:
         doc.add_section()
     
     @staticmethod
-    def export_evidence_to_word(excel_file, word_file=None, output_folder=None, multi_line_text=True, show_borders=True, exclude_columns=None):
+    def export_evidence_to_word(evidence_data, output_file, output_folder=None, multi_line_text=True, 
+                               show_borders=True, exclude_columns=None, page_settings=None):
         """
-        Export precision evidence from Excel to Word document
+        Export evidence data to a Word document.
         
         Args:
-            excel_file: Path to Excel file or DataFrame
-            word_file: Path to output Word file
-            output_folder: Output folder path, used to find images
-            multi_line_text: If True, split text by newlines in the left cell
-            show_borders: If True, show table borders
-            exclude_columns: Columns to exclude from evidence text
+            evidence_data: Path to Excel file or pandas DataFrame with evidence data
+            output_file: Path to output Word file
+            output_folder: Folder containing images referenced in evidence data
+            multi_line_text: Whether to use multi-line text format (True) or JSON format (False)
+            show_borders: Whether to show borders in tables
+            exclude_columns: List of columns to exclude from evidence text
+            page_settings: Dictionary with page settings for Word document.
+                          Supported keys: 'orientation' ('portrait' or 'landscape'),
+                          'margins' (dict with 'left', 'right', 'top', 'bottom' in inches)
         """
         logger = logging.getLogger(__name__)
         
         try:
-            # Check if excel_file is already a DataFrame
-            if isinstance(excel_file, pd.DataFrame):
-                df = excel_file
-            else:
-                # Read Excel file into DataFrame
-                df = pd.read_excel(excel_file)
-            
-            # If word_file is None, generate a default output path
-            if word_file is None:
-                # Create output directory in current working directory if it doesn't exist
-                output_dir = os.path.join(os.getcwd(), "output", "word")
-                
-                if isinstance(excel_file, str):
-                    # Get the base name of the Excel file and change extension to .docx
-                    base_name = os.path.basename(excel_file)
-                    base_name_no_ext = os.path.splitext(base_name)[0]
-                    word_file = os.path.join(output_dir, f"{base_name_no_ext}.docx")
+            # Handle both DataFrame and file path inputs
+            if isinstance(evidence_data, str):
+                if evidence_data.endswith('.xlsx') or evidence_data.endswith('.xls'):
+                    df = pd.read_excel(evidence_data)
                 else:
-                    # If excel_file is a DataFrame, use a timestamp-based name
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    word_file = os.path.join(output_dir, f"evidence_export_{timestamp}.docx")
-                
-                logger.info(f"No output file specified, using default: {word_file}")
+                    raise ValueError(f"Unsupported file format: {evidence_data}")
+            elif isinstance(evidence_data, pd.DataFrame):
+                df = evidence_data
+            else:
+                raise ValueError("evidence_data must be a DataFrame or path to an Excel file")
             
-            # Check if 'is_precision_evidence' column exists
+            # Filter for precision evidence only if the column exists
             if 'is_precision_evidence' in df.columns:
-                # Filter for precision evidence
-                true_values = [True, 'True', 'true', 1, '1', 'yes', 'Y']
-                evidence_df = df[df['is_precision_evidence'].isin(true_values)].copy()
+                # Handle various true value formats (True, 'true', 'True', 1, etc.)
+                true_values = [True, 'true', 'True', 'TRUE', 1, '1', 'yes', 'Yes', 'YES']
+                df = df[df['is_precision_evidence'].astype(str).isin([str(v) for v in true_values])]
+            
+            if df.empty:
+                logger.warning("No evidence data to export to Word")
+                return
                 
-                if evidence_df.empty:
-                    logger.warning("No precision evidence found in Excel file")
-                    return word_file
-                
-                # Create Word document
-                doc = Document()
-                
-                # Apply document formatting
-                DocumentFormatter.apply_word_document_format(doc)
-                
-                # Define default columns to exclude from evidence text if not provided
-                if exclude_columns is None:
-                    exclude_columns = (
-                        'page_type', 'is_precision_evidence',
-                        'page_number', 'success', 'document_type', '解析', '分析', '结论', '文字提取', 
-                        'evidence_level', 'evidence_type', 'evidence_list'
-                    )
-                
-                # Process evidence row by row
-                for idx, row in evidence_df.iterrows():
-                    # Create a new section for each evidence item to control page layout
-                    if idx > 0:
-                        new_section = doc.add_section()
-                        # By default, use landscape orientation
-                        DocumentFormatter.set_section_orientation(new_section, 'landscape')
+            # Create Word document
+            doc = Document()
+            
+            # Apply document formatting
+            DocumentFormatter.apply_word_document_format(doc)
+            
+            # Get default orientation from page_settings or use landscape as default
+            default_orientation = 'landscape'
+            if page_settings and 'orientation' in page_settings:
+                default_orientation = page_settings['orientation'].lower()
+            
+            # Ensure the first section has the correct orientation
+            first_section = doc.sections[0]
+            DocumentFormatter.set_section_orientation(first_section, default_orientation)
+            
+            # Apply custom margins if specified
+            if page_settings and 'margins' in page_settings:
+                margins = page_settings['margins']
+                if 'left' in margins:
+                    first_section.left_margin = Inches(margins['left'])
+                if 'right' in margins:
+                    first_section.right_margin = Inches(margins['right'])
+                if 'top' in margins:
+                    first_section.top_margin = Inches(margins['top'])
+                if 'bottom' in margins:
+                    first_section.bottom_margin = Inches(margins['bottom'])
+            
+            # Define default columns to exclude from evidence text if not provided
+            if exclude_columns is None:
+                exclude_columns = (
+                    'page_type', 'is_precision_evidence',
+                    'page_number', 'success', 'document_type', '解析', '分析', '结论', '文字提取', 
+                    'evidence_level', 'evidence_type', 'evidence_list'
+                )
+            
+            # Process evidence row by row
+            for idx, row in df.iterrows():
+                # Create a new section for each evidence item (except the first one)
+                if idx > 0:
+                    doc.add_section()
+                    section = doc.sections[idx]
+                    # Apply the same orientation to all sections
+                    DocumentFormatter.set_section_orientation(section, default_orientation)
                     
-                    # Prepare evidence text
-                    evidence_dict = EvidenceProcessor._prepare_evidence_text(row, exclude_columns)
-                    
-                    # Get image path
-                    image_path = row.get('image_path', '')
-                    
-                    # Create table with text and image placeholders
-                    ExportUtils._create_evidence_table(doc, evidence_dict, image_path, 
-                                                      multi_line_text=multi_line_text,
-                                                      show_borders=show_borders,
-                                                      exclude_columns=exclude_columns)
-                    
-                    # Add separator line
-                    separator = doc.add_paragraph('-' * 50)
-                    ContentFormatter.apply_separator_format(separator)
+                    # Apply custom margins if specified
+                    if page_settings and 'margins' in page_settings:
+                        margins = page_settings['margins']
+                        if 'left' in margins:
+                            section.left_margin = Inches(margins['left'])
+                        if 'right' in margins:
+                            section.right_margin = Inches(margins['right'])
+                        if 'top' in margins:
+                            section.top_margin = Inches(margins['top'])
+                        if 'bottom' in margins:
+                            section.bottom_margin = Inches(margins['bottom'])
                 
-                # Create directory if it doesn't exist
-                if word_file is not None:
-                    os.makedirs(os.path.dirname(word_file), exist_ok=True)
-                    
-                    # Save Word document
-                    doc.save(word_file)
-                    logger.info(f"Evidence exported to Word file: {word_file}")
-                else:
-                    logger.error("No output file path provided and could not generate a default path")
-                return word_file
+                # Prepare evidence text
+                evidence_dict = EvidenceProcessor._prepare_evidence_text(row, exclude_columns)
+                
+                # Get image path
+                image_path = row.get('image_path', '')
+                
+                # Create table with text and image placeholders
+                ExportUtils._create_evidence_table(doc, evidence_dict, image_path, 
+                                                  multi_line_text=multi_line_text,
+                                                  show_borders=show_borders,
+                                                  exclude_columns=exclude_columns)
+                
+                # Add separator line
+                separator = doc.add_paragraph('-' * 50)
+                ContentFormatter.apply_separator_format(separator)
+            
+            # Create directory if it doesn't exist
+            if output_file is not None:
+                os.makedirs(os.path.dirname(output_file), exist_ok=True)
+                
+                # Save Word document
+                doc.save(output_file)
+                logger.info(f"Evidence exported to Word file: {output_file}")
             else:
-                logger.warning("No 'is_precision_evidence' column found in Excel file")
-                return word_file
+                logger.error("No output file path provided and could not generate a default path")
+            return output_file
         except Exception as e:
             logger.error(f"Error exporting evidence to Word: {str(e)}")
             raise

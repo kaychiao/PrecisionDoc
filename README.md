@@ -95,7 +95,18 @@ results = process_single_pdf(
     output_folder="./output",  # Optional
     api_key="your-api-key",  # Optional
     base_url="https://api.example.com/v1",  # Optional
-    model="gpt-4"  # Optional
+    model="gpt-4",  # Optional
+    multi_line_text=True,  # Optional
+    show_borders=True,  # Optional
+    page_settings={  # Optional, controls Word document page layout
+        'orientation': 'landscape',  # 'landscape' or 'portrait'
+        'margins': {  # Optional custom margins in inches
+            'left': 0.75,
+            'right': 0.5,
+            'top': 0.5,
+            'bottom': 0.75
+        }
+    }
 )
 
 # Convert Excel evidence to Word
@@ -103,7 +114,8 @@ word_file = excel_to_word(
     excel_file="/path/to/evidence.xlsx",
     word_file="/path/to/output.docx",  # Optional
     multi_line_text=True,  # Optional
-    show_borders=True  # Optional
+    show_borders=True,  # Optional
+    exclude_columns=["column1", "column2"]  # Optional
 )
 ```
 

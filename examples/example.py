@@ -5,7 +5,7 @@ import shutil
 from dotenv import load_dotenv
 
 # Import from PrecisionDoc package using absolute imports
-from precisiondoc import process_pdf, excel_to_word
+from precisiondoc import process_single_pdf, excel_to_word
 from precisiondoc.pdf.pdf_processor import PDFProcessor
 from precisiondoc.ai.ai_client import AIClient
 from precisiondoc.ai.qwen_api import QwenClient
@@ -69,6 +69,8 @@ def main():
     parser.add_argument("--show-borders", action="store_true", default=True,
                         help="Show borders in Word export tables (default: True)")
     parser.add_argument("--exclude-columns", help="Comma-separated list of columns to exclude from Word export")
+    parser.add_argument("--page-settings-example", action="store_true", 
+                        help="Run the page settings example with different orientations and margins")
     
     args = parser.parse_args()
     
@@ -84,6 +86,12 @@ def main():
                 load_dotenv()
             else:
                 print(f"Warning: {args.env_file} not found and couldn't create from .env.example")
+    
+    # Run the page settings example if requested
+    if args.page_settings_example:
+        print("Running page settings example...")
+        example_with_page_settings()
+        return
     
     # Handle Excel to Word conversion if requested
     if args.excel_to_word:
@@ -153,5 +161,57 @@ def main():
         print(f"Error processing PDFs: {str(e)}")
         return
 
+def example_with_page_settings():
+    """
+    Example demonstrating how to use page_settings parameter to control Word document formatting
+    """
+    # Path to a single PDF file - using a test file from the project
+    pdf_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 
+                           "tests", "test_files", "single_page_01.pdf")
+    
+    if not os.path.exists(pdf_path):
+        print(f"Test PDF file not found: {pdf_path}")
+        print("Please provide a valid PDF file path.")
+        return
+    
+    print(f"Using test PDF file: {pdf_path}")
+    
+    # Example 1: Portrait orientation with default margins
+    portrait_settings = {
+        'orientation': 'portrait'
+    }
+    
+    # Process with portrait orientation
+    portrait_results = process_single_pdf(
+        pdf_path=pdf_path,
+        multi_line_text=True,
+        show_borders=True,
+        page_settings=portrait_settings
+    )
+    print(f"Processed PDF with portrait orientation: {portrait_results}")
+    
+    # Example 2: Landscape orientation with custom margins
+    landscape_settings = {
+        'orientation': 'landscape',
+        'margins': {
+            'left': 0.75,   # 0.75 inches left margin
+            'right': 0.5,   # 0.5 inches right margin
+            'top': 0.5,     # 0.5 inches top margin
+            'bottom': 0.75  # 0.75 inches bottom margin
+        }
+    }
+    
+    # Process with landscape orientation and custom margins
+    landscape_results = process_single_pdf(
+        pdf_path=pdf_path,
+        multi_line_text=True,
+        show_borders=False,  # No borders in this example
+        page_settings=landscape_settings
+    )
+    print(f"Processed PDF with landscape orientation and custom margins: {landscape_results}")
+
 if __name__ == "__main__":
+    # Run the examples
+    # example_single_pdf()
+    # example_multiple_pdfs()
     main()

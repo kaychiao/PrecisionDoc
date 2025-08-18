@@ -72,7 +72,8 @@ def process_pdf(folder_path, api_key=None, output_folder="./output", base_url=No
     processor.save_consolidated_results(results)
     return results
 
-def process_single_pdf(pdf_path, doc_type=None, api_key=None, output_folder="./output", base_url=None, model=None):
+def process_single_pdf(pdf_path, doc_type=None, api_key=None, output_folder="./output", base_url=None, model=None,
+                      multi_line_text=True, show_borders=True, exclude_columns=None, page_settings=None):
     """
     Process a single PDF file and generate evidence extraction results.
     
@@ -83,6 +84,12 @@ def process_single_pdf(pdf_path, doc_type=None, api_key=None, output_folder="./o
         output_folder (str, optional): Output folder for results. Defaults to "./output".
         base_url (str, optional): Base URL for API. If None, will try to load from environment variable BASE_URL.
         model (str, optional): Model to use for API calls. If None, will try to load from environment variable TEXT_MODEL.
+        multi_line_text (bool, optional): Whether to use multi-line text format in Word output. Defaults to True.
+        show_borders (bool, optional): Whether to show borders in Word tables. Defaults to True.
+        exclude_columns (list, optional): List of column names to exclude from Word output.
+        page_settings (dict, optional): Dictionary with page settings for Word document. 
+                                       Supported keys: 'orientation' ('portrait' or 'landscape'),
+                                       'margins' (dict with 'left', 'right', 'top', 'bottom' in inches).
         
     Returns:
         dict: Dictionary with processing results for the PDF
@@ -95,6 +102,12 @@ def process_single_pdf(pdf_path, doc_type=None, api_key=None, output_folder="./o
         base_url=base_url,
         model=model
     )
+    
+    # Store Word formatting parameters in the processor
+    processor.multi_line_text = multi_line_text
+    processor.show_borders = show_borders
+    processor.exclude_columns = exclude_columns
+    processor.page_settings = page_settings
     
     # Process the single PDF file
     results = processor.process_single(pdf_path, doc_type)

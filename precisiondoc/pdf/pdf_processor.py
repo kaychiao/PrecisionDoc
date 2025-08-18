@@ -52,6 +52,12 @@ class PDFProcessor:
         
         # Initialize AI client
         self.ai_client = AIClient(api_key=api_key, base_url=base_url, model=model)
+        
+        # Word export parameters (defaults)
+        self.multi_line_text = True
+        self.show_borders = True
+        self.exclude_columns = None
+        self.page_settings = None
     
     def process_page_with_ai(self, page_path: str) -> Dict:
         """
@@ -235,8 +241,16 @@ class PDFProcessor:
         DataUtils.save_to_excel(all_rows, excel_file)
         logger.info(f"Saved Excel results for {doc_type} to {excel_file}")
         
-        # Export to Word
-        WordUtils.export_evidence_to_word(excel_file, word_file, self.output_folder, multi_line_text=True)
+        # Export to Word with the specified formatting parameters
+        WordUtils.export_evidence_to_word(
+            excel_file, 
+            word_file, 
+            self.output_folder, 
+            multi_line_text=self.multi_line_text,
+            show_borders=self.show_borders,
+            exclude_columns=self.exclude_columns,
+            page_settings=self.page_settings
+        )
         logger.info(f"Saved Word results for {doc_type} to {word_file}")
         
         # Save consolidated results after each document is processed
