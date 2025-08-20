@@ -19,16 +19,16 @@ logger = setup_logger(__name__)
 class PDFProcessor:
     """Main class for processing PDF documents"""
     
-    def __init__(self, folder_path: str, api_key: str = None, output_folder: str = "./output", base_url: str = None, model: str = None):
+    def __init__(self, folder_path: str, output_folder: str = "./output", ai_settings: dict = None, **legacy_params):
         """
         Initialize the PDF processor.
         
         Args:
             folder_path: Path to the folder containing PDF files
-            api_key: API key for OpenAI. If None, will try to load from environment variables.
             output_folder: Path to the output folder for results. Default is "./output"
-            base_url: Base URL for API. If None, will try to load from environment variables.
-            model: Model to use for API calls. If None, will try to load from environment variables.
+            ai_settings: Dictionary with AI settings. Supported keys: 'api_key', 'base_url', 'model'
+            **legacy_params: Legacy parameters (api_key, base_url, model) for backward compatibility.
+                            These are deprecated since v0.1.4 and will be removed in a future version.
         """
         self.folder_path = folder_path
         
@@ -50,8 +50,17 @@ class PDFProcessor:
         os.makedirs(self.excel_folder, exist_ok=True)
         os.makedirs(self.word_folder, exist_ok=True)
         
+        # Handle legacy parameters for backward compatibility
+        if any(key in legacy_params for key in ['api_key', 'base_url', 'model']):
+            if ai_settings is None:
+                ai_settings = {}
+            # Add legacy parameters to ai_settings if not already present
+            for key in ['api_key', 'base_url', 'model']:
+                if key in legacy_params and key not in ai_settings:
+                    ai_settings[key] = legacy_params[key]
+        
         # Initialize AI client
-        self.ai_client = AIClient(api_key=api_key, base_url=base_url, model=model)
+        self.ai_client = AIClient(ai_settings=ai_settings)
         
         # Word export parameters (defaults)
         self.multi_line_text = True
@@ -242,19 +251,37 @@ class PDFProcessor:
         logger.info(f"Saved Excel results for {doc_type} to {excel_file}")
         
         # Export to Word with the specified formatting parameters
-        WordUtils.export_evidence_to_word(
-            excel_file, 
-            word_file, 
-            self.output_folder, 
-            multi_line_text=self.multi_line_text,
-            show_borders=self.show_borders,
-            exclude_columns=self.exclude_columns,
-            page_settings=self.page_settings
-        )
+        self.export_evidence_to_word(excel_file, word_file)
         logger.info(f"Saved Word results for {doc_type} to {word_file}")
         
         # Save consolidated results after each document is processed
         self.save_consolidated_results({doc_type: page_results})
+
+    def export_evidence_to_word(self, excel_file: str, word_file: str = None) -> str:
+        """
+        Export evidence from Excel to Word.
+        
+        Args:
+            excel_file: Path to Excel file with evidence data
+            word_file: Path to output Word file. If None, will use the Excel filename with .docx extension.
+            
+        Returns:
+            Path to the created Word file
+        """
+        # 如果page_settings是Pydantic模型，转换为字典
+        page_settings_dict = None
+        if self.page_settings:
+            page_settings_dict = self.page_settings.model_dump()
+        
+        return WordUtils.export_evidence_to_word(
+            excel_file=excel_file,
+            word_file=word_file,
+            output_folder=self.output_folder,
+            multi_line_text=self.multi_line_text,
+            show_borders=self.show_borders,
+            exclude_columns=self.exclude_columns,
+            page_settings=page_settings_dict
+        )
 
     def save_consolidated_results(self, results: Dict[str, List[Dict]]) -> str:
         """

@@ -83,9 +83,11 @@ from precisiondoc import process_pdf, excel_to_word, process_single_pdf
 results = process_pdf(
     folder_path="/path/to/pdfs",
     output_folder="./output",
-    api_key="your-api-key",  # Optional, will use env var if not provided
-    base_url="https://api.example.com/v1",  # Optional
-    model="gpt-4"  # Optional
+    ai_settings={
+        "api_key": "your-api-key",
+        "base_url": "https://api.example.com/v1",
+        "model": "gpt-4"
+    }
 )
 
 # Process a single PDF file
@@ -93,9 +95,11 @@ results = process_single_pdf(
     pdf_path="/path/to/document.pdf",
     doc_type="DocumentName",  # Optional, will use filename if not provided
     output_folder="./output",  # Optional
-    api_key="your-api-key",  # Optional
-    base_url="https://api.example.com/v1",  # Optional
-    model="gpt-4",  # Optional
+    ai_settings={
+        "api_key": "your-api-key",
+        "base_url": "https://api.example.com/v1",
+        "model": "gpt-4"
+    },
     multi_line_text=True,  # Optional
     show_borders=True,  # Optional
     page_settings={  # Optional, controls Word document page layout
@@ -130,9 +134,11 @@ from precisiondoc import PDFProcessor, WordUtils, DataUtils
 processor = PDFProcessor(
     folder_path="/path/to/pdfs",
     output_folder="./output",
-    api_key="your-api-key",
-    base_url="https://api.example.com/v1",
-    model="gpt-4"
+    ai_settings={
+        "api_key": "your-api-key",
+        "base_url": "https://api.example.com/v1",
+        "model": "gpt-4"
+    }
 )
 
 # Process all PDFs
@@ -227,6 +233,67 @@ The Word export functionality includes several advanced formatting options:
     - `False`: Hides table borders for a cleaner look
 
 ## Latest Features
+
+### Version 0.1.4+
+
+#### Parameter Validation with Pydantic
+
+PrecisionDoc uses Pydantic for robust parameter validation:
+
+- **Type Safety**: All parameters are validated for correct types and formats
+- **Default Values**: Sensible defaults are provided for optional parameters
+- **Validation Rules**: Business rules are enforced (e.g., valid margin ranges)
+- **Error Messages**: Clear error messages when invalid parameters are provided
+- **Nested Validation**: Complex nested structures like page settings are fully validated
+
+Example of page settings validation:
+```python
+# Valid page settings
+page_settings = {
+    "orientation": "landscape",  # must be 'landscape' or 'portrait'
+    "margins": {
+        "left": 0.75,  # in inches
+        "right": 0.5,
+        "top": 0.5,
+        "bottom": 0.75
+    }
+}
+
+# These will be validated automatically when passed to any function
+results = process_single_pdf(
+    pdf_path="/path/to/document.pdf",
+    page_settings=page_settings
+)
+```
+
+#### API Simplification
+
+The API has been simplified:
+
+- **Consolidated AI Parameters**: Individual parameters (`api_key`, `base_url`, `model`) have been consolidated into a single `ai_settings` dictionary
+- **Backward Compatibility**: Legacy parameters are still supported but deprecated and will be removed in a future version
+- **Cleaner Interface**: Reduces parameter redundancy and improves code organization
+
+Example of new API usage:
+```python
+# New style (recommended)
+results = process_pdf(
+    folder_path="/path/to/pdfs",
+    ai_settings={
+        "api_key": "your-api-key",
+        "base_url": "https://api.example.com/v1",
+        "model": "gpt-4"
+    }
+)
+
+# Legacy style (deprecated, will be removed in future)
+results = process_pdf(
+    folder_path="/path/to/pdfs",
+    api_key="your-api-key",
+    base_url="https://api.example.com/v1",
+    model="gpt-4"
+)
+```
 
 ### 1:1 PDF Processing Mapping
 

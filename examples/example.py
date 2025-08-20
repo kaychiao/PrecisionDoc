@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 from precisiondoc import process_single_pdf, excel_to_word
 from precisiondoc.pdf.pdf_processor import PDFProcessor
 from precisiondoc.ai.ai_client import AIClient
-from precisiondoc.ai.qwen_api import QwenClient
 
 def create_sample_env_if_missing():
     """Create .env file from .env.example if .env doesn't exist"""
@@ -55,12 +54,12 @@ def main():
     """Main entry point for the example script"""
     parser = argparse.ArgumentParser(description="Example script for PDF processing")
     parser.add_argument("--folder", default="./pdf_files", help="Folder containing PDF files")
-    parser.add_argument("--api-key", help="API key for OpenAI or Qwen")
+    parser.add_argument("--api-key", help="API key for OpenAI or Qwen (deprecated, use ai-settings)")
     parser.add_argument("--use-qwen", action="store_true", help="Use Qwen API instead of OpenAI")
     parser.add_argument("--env-file", default=".env", help="Path to .env file")
     parser.add_argument("--output-folder", default="./output", help="Output folder for results")
-    parser.add_argument("--model", help="Model to use for API calls")
-    parser.add_argument("--base-url", help="Base URL for API calls")
+    parser.add_argument("--model", help="Model to use for API calls (deprecated, use ai-settings)")
+    parser.add_argument("--base-url", help="Base URL for API calls (deprecated, use ai-settings)")
     parser.add_argument("--excel-to-word", action="store_true", help="Convert Excel evidence to Word")
     parser.add_argument("--excel-file", help="Excel file to convert to Word (required if --excel-to-word is used)")
     parser.add_argument("--word-file", help="Output Word file path (optional)")
@@ -133,13 +132,20 @@ def main():
     print(f"Using {'Qwen' if args.use_qwen else 'OpenAI'} API")
     
     try:
+        # Create ai_settings dictionary from command line arguments
+        ai_settings = {}
+        if args.api_key:
+            ai_settings['api_key'] = args.api_key
+        if args.base_url:
+            ai_settings['base_url'] = args.base_url
+        if args.model:
+            ai_settings['model'] = args.model
+        
         # Use the PDFProcessor class directly to demonstrate its features
         processor = PDFProcessor(
             folder_path=args.folder,
-            api_key=args.api_key,
             output_folder=args.output_folder,
-            base_url=args.base_url,
-            model=args.model
+            ai_settings=ai_settings
         )
         
         # Process all PDFs with 1:1 mapping between original PDFs and output files
@@ -186,7 +192,8 @@ def example_with_page_settings():
         pdf_path=pdf_path,
         multi_line_text=True,
         show_borders=True,
-        page_settings=portrait_settings
+        page_settings=portrait_settings,
+        ai_settings={}  # Empty dictionary will use environment variables
     )
     print(f"Processed PDF with portrait orientation: {portrait_results}")
     
@@ -206,7 +213,8 @@ def example_with_page_settings():
         pdf_path=pdf_path,
         multi_line_text=True,
         show_borders=False,  # No borders in this example
-        page_settings=landscape_settings
+        page_settings=landscape_settings,
+        ai_settings={}  # Empty dictionary will use environment variables
     )
     print(f"Processed PDF with landscape orientation and custom margins: {landscape_results}")
 

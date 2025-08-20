@@ -6,6 +6,7 @@ import json
 
 from precisiondoc.utils.log_utils import setup_logger
 from precisiondoc.config.promptes import page_type_classification_prompt_cn
+from precisiondoc.config.models import AISettings, validate_ai_settings
 
 # Setup logger for this module
 logger = setup_logger(__name__)
@@ -13,33 +14,35 @@ logger = setup_logger(__name__)
 class AIClient:
     """Client for interacting with AI APIs (OpenAI)"""
     
-    def __init__(self, api_key: str = None, base_url: str = None, model: str = None):
+    def __init__(self, ai_settings: Optional[Dict] = None, **legacy_params):
         """
         Initialize the AI client.
         
         Args:
-            api_key: API key for OpenAI. If None, will try to load from environment variables.
-            base_url: Base URL for API. If None, will try to load from environment variables.
-            model: Model to use for OpenAI API calls. If None, will try to load from environment variables.
+            ai_settings: Dictionary with AI settings or AISettings instance.
+                         Supported keys: 'api_key', 'base_url', 'model'
+            **legacy_params: Legacy parameters (api_key, base_url, model) for backward compatibility.
+                            These are deprecated since v0.1.4 and will be removed in a future version.
         """
+        # Use Pydantic model for parameter validation
+        settings = validate_ai_settings(ai_settings, **legacy_params)
+        
+        self.api_key = settings.api_key
+        self.base_url = settings.base_url
+        self.model = settings.model
+            
         # If API key is not provided, try to load from environment variables
-        if api_key is None:
+        if self.api_key is None:
             self.api_key = os.getenv("API_KEY")
             if not self.api_key:
                 raise ValueError("API_KEY environment variable not set")
-        else:
-            self.api_key = api_key
             
         # Get base URL from parameter or environment variables
-        if base_url:
-            self.base_url = base_url
-        else:
+        if not self.base_url:
             self.base_url = os.getenv("BASE_URL", "https://api.openai.com/v1")
         
         # Get model from parameter or environment variables
-        if model:
-            self.model = model
-        else:
+        if not self.model:
             self.model = os.getenv("TEXT_MODEL", "gpt-4")
     
     def identify_page_type(self, text: str) -> Dict:
@@ -52,15 +55,6 @@ class AIClient:
         Returns:
             Dictionary with page type information
         """
-        # prompt = """
-        # 请根据页面文本的内容判断这个PDF页面的类型。可能的类型包括：
-        # 1. 目录页 (table_of_contents) - 全部内容均为章节列表和页码, 且无其他类型内容
-        # 2. 作者页 (author) - 全部内容均为作者信息, 且无其他类型内容
-        # 3. 参考文献页 (references) - 全部内容均为引用的文献列表, 且无其他类型内容
-        # 4. 内容页 (content) - 包含实际的医疗指南内容, 也许包含一些图片, 但图片内容与医疗指南内容有关
-        
-        # 请仅返回一个单词作为页面类型：table_of_contents、references 或 content
-        # """
         prompt = page_type_classification_prompt_cn
         # Use text-based identification
         prompt += f"\n\n页面文本内容：\n{text[:1000]}..."  # Limit text length

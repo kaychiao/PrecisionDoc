@@ -14,7 +14,7 @@ from precisiondoc.utils.log_utils import setup_logger
 import pandas as pd
 import os
 
-# 为了保持向后兼容性，创建一个WordUtils类，它组合了所有其他类的功能
+# For backward compatibility, create a WordUtils class that combines functionality from all other classes
 class WordUtils(DocumentFormatter, TableUtils, ContentFormatter, 
                EvidenceProcessor, ImageUtils, ExportUtils):
     """Word document processing utility class - Facade for all Word utilities"""
@@ -50,8 +50,8 @@ class WordUtils(DocumentFormatter, TableUtils, ContentFormatter,
             
         # Filter precision evidence if the column exists
         if 'is_precision_evidence' in df.columns:
-            # 处理不同类型的is_precision_evidence值
-            # 可能的值: True, 'True', 'true', 1, '1', 'yes', 'Y', 等
+            # Handle different types of is_precision_evidence values
+            # Possible values: True, 'True', 'true', 1, '1', 'yes', 'Y', etc.
             true_values = [True, 'True', 'true', 1, '1', 'yes', 'Y']
             evidence_df = df[df['is_precision_evidence'].isin(true_values)].copy()
             
@@ -78,7 +78,7 @@ class WordUtils(DocumentFormatter, TableUtils, ContentFormatter,
                                                      exclude_columns=exclude_columns,
                                                      page_settings=page_settings)
 
-# 导出主要类，使其可以直接从precisiondoc.utils.word导入
+# Export main classes to make them directly importable from precisiondoc.utils.word
 __all__ = [
     'WordUtils',
     'DocumentFormatter',
